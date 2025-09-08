@@ -1,0 +1,2 @@
+build desktop/test.txt desktop/build.py
+build desktop/voxel1/main.vox desktop/build.py
