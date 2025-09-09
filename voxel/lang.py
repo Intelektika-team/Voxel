@@ -1,5 +1,6 @@
 from voxel.interface import *
 
+
 class Errors:
     def SyntaxERROR(text :str, exiting :bool=True):
         print(color.red(f"\nSyntax Error - {text}"))
@@ -19,6 +20,10 @@ class Errors:
     
     def IncludeERROR(text :str, exiting :bool=True):
         print(color.set(f"Error in include - {text}", color.YELLOW))
+        if exiting: exit()
+
+    def FileERROR(text :str, exiting :bool=True):
+        print(color.set(f"File error - {text}", color.YELLOW))
         if exiting: exit()
 
 def handle_error(exiting=True):
@@ -86,7 +91,7 @@ class VoxelLang:
         self.gentape(self.length)
         self.pos = 0  # Стартовая позиция в середине ленты
         self.code = []
-        self.libs = {"stdio":
+        self.libs = {"tape":{"lib":f"tape, pos = {self.tape}, {self.pos}", "used":False},"stdio":
         {"lib":"""
 
 # MARK: Standart pyl library 
@@ -128,9 +133,6 @@ class color:
     def underline_green(text):
         return f"{color.UNDERLINE}{color.BRIGHT_GREEN}{text}{color.RESET}"
     
-
-
-    
     @staticmethod
     def red(text):
         return f"{color.BRIGHT_RED}{text}{color.RESET}"
@@ -165,15 +167,27 @@ class color:
 
 class Errors:
     def SyntaxERROR(text :str, exiting :bool=True):
-        print(color.red(f"\\nSyntax Error - {text}"))
+        print(color.red(f"\nSyntax Error - {text}"))
         if exiting: exit()
 
     def SystemERROR(text :str, exiting :bool=True):
-        print(color.red(f"\\nSystem Error - {text}"))
+        print(color.red(f"\nSystem Error - {text}"))
         if exiting: exit()
 
     def ErrorHANDLER(text :str, exiting :bool=True):
         print(color.set(f"Handled Error - {text}", color.YELLOW))
+        if exiting: exit()
+    
+    def NotFoundERROR(text :str, exiting :bool=True):
+        print(color.set(f"Not found - {text}", color.YELLOW))
+        if exiting: exit()
+    
+    def IncludeERROR(text :str, exiting :bool=True):
+        print(color.set(f"Error in include - {text}", color.YELLOW))
+        if exiting: exit()
+
+    def FileERROR(text :str, exiting :bool=True):
+        print(color.set(f"File error - {text}", color.YELLOW))
         if exiting: exit()
 
 def cls():
@@ -239,7 +253,7 @@ def main(user :str='Guest'):
 }
         
 
-        self.code.append(f"\n # MARK: System \ntape, pos = {self.tape}, {self.pos}")
+        self.code.append(f"\n # MARK: System")
         self.code.append(
 """
 import os, platform, time
@@ -265,6 +279,14 @@ import os, platform, time
                 Errors.NotFoundERROR(f"Library {arg_str} isn't found.")
         except Exception as e:
             Errors.IncludeERROR(f'Include error: {e}')
+
+    @handle_error()
+    def import_func(self, arg_str :str=''):
+        inp = arg_str.split()
+        try: 
+            self.code.append(f'import _dependencies_.{inp[0]}')
+        except Exception as e:
+            Errors.IncludeERROR(f'Import error: {e}')
 
     @handle_error()
     def next(self, arg_str: str = ""):
@@ -392,8 +414,8 @@ import os, platform, time
     def build(self, path: str = 'cache.py'):
         import os
         
-        # Создаем директорию для кэша
-        cache_dir = os.path.join(os.getcwd(), '__voxel_builds__')
+        # Создаем директорию для системы
+        cache_dir = os.path.join(os.getcwd(), '_voxel_')
         os.makedirs(cache_dir, exist_ok=True)
         
         # Формируем полный путь к файлу внутри директории кэша
@@ -442,6 +464,7 @@ local_parser.add_command('dvs', local_lang.divission, langargs=True)
 local_parser.add_command('*', local_lang.multyply, langargs=True)
 local_parser.add_command('/', local_lang.divission, langargs=True)
 local_parser.add_command('@include', local_lang.include, langargs=True)
+local_parser.add_command('@import', local_lang.import_func, langargs=True)
 def use(arg_str: str=""):
     if arg_str in points:
         local_parser.parse(points[arg_str].replace('{', '').replace('}', ''), sep='/:')
@@ -516,6 +539,7 @@ def builder(text: str, path: str = 'build.py'):
     dlocal_parser.add_command('*', dlocal_lang.multyply, langargs=True)
     dlocal_parser.add_command('/', dlocal_lang.divission, langargs=True)
     dlocal_parser.add_command('@include', dlocal_lang.include, langargs=True)
+    dlocal_parser.add_command('@import', dlocal_lang.include, langargs=True)
 
     def dstart(arg_str :str=""):
         points = {}

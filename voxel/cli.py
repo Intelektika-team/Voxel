@@ -15,7 +15,7 @@ l = lang.local_lang
 h = lang.handle_error
 
 
-ver_str = "v0.5.6 1st-alpha "
+ver_str = "v0.5.8 1st-alpha stable"
 
 about_str = f"""
 ======= About =======
@@ -72,7 +72,7 @@ def __main__():
 
                 inp = inps.split()
 
-                if inp[0] == 'build':
+                if inp[0] in ['build', '-b']:
                     try:
                         path = f"{inp[1]}"
                         print(i.color.set(f'Building {path} to {inp[2]}...', i.color.YELLOW))
@@ -86,9 +86,9 @@ def __main__():
 
 
                     except Exception as e:
-                        print(lang.Errors.SystemERROR(f'Error. {e}', False))
+                        lang.Errors.SystemERROR(f'Error. {e}', False)
 
-                elif inp[0] == 'debug':
+                elif inp[0] in ['-d', 'debug', 'deb']:
                     try:
                         path = f"{inp[1]}"
                         print(i.color.set('Debuging start ===', i.color.GREEN))
@@ -100,11 +100,11 @@ def __main__():
                             print(i.color.set(f'Running succes...', i.color.GREEN))
                         print(i.color.set(f'Debug succes =====', i.color.GREEN))
                     except FileNotFoundError:
-                        print(lang.Errors.SystemERROR(f'File not found.', False))
+                        lang.Errors.SystemERROR(f'File not found.', False)
 
 
                     except Exception as e:
-                        print(lang.Errors.SystemERROR(f'Error. {e}', False))
+                        lang.Errors.SystemERROR(f'Error. {e}', False)
 
 
                 elif inp[0] == 'exit':
@@ -116,10 +116,10 @@ def __main__():
                 elif inp[0] == 'ls':
                     print(" | ".join(os.listdir(os.getcwd())))
 
-                elif inp[0] in ('restart', 'reset'):
+                elif inp[0] in ['restart', 'reset']:
                     break
 
-                elif inp[0] in ('cls', 'clear'):
+                elif inp[0] in ['cls', 'clear']:
                     break
 
                 elif inp[0] in ['-h', '-H', 'help']:
@@ -134,23 +134,25 @@ def __main__():
                 elif inp[0] in ['-n', 'new']:
                     current = os.getcwd()
                     name = str(inp[1])
-                    dir_path = f"{os.getcwd()}/{name}"
-                    print(i.color.set(f'Creating project ===', i.color.GREEN))
+                    dir_path = os.path.join(os.getcwd(), name)
+                    print(i.color.set('Creating project ===', i.color.GREEN))
                     print(i.color.set(f'Creating {name}...', i.color.YELLOW))
 
-                    # Проверяем, существует ли директория
                     if not os.path.exists(dir_path):
-                        # Если не существует, создаем её
                         os.makedirs(dir_path)
-                        print(i.color.set(f"Dir '{dir_path}' create succes.", i.color.YELLOW))
+                        print(i.color.set(f"Directory '{dir_path}' created successfully.", i.color.YELLOW))
                     else:
-                        print(i.color.set(f"Dir '{dir_path}' has already created.", i.color.RED))
+                        lang.Errors.FileERROR('Directory already exists')
+                        continue  # или return в зависимости от логики
 
                     os.chdir(name)
+                    
+                    # Создание основного файла
                     code = """= Hello_user!_That's_the_basic_structure_of_voxel_programm._We_recomended_to_write_code_like_that.;
 
 :voxel-setup-{
     @start /:
+    @include= tape /:
     @include= first_programm /:
     = Your_setup-voxel_here /:
 };
@@ -159,7 +161,6 @@ def __main__():
     pyl= main('User') /:
     = Your_program-voxel_here /:
 };
-
 
 = Start;
 
@@ -170,13 +171,31 @@ def __main__():
 };
 
 use= main;
-= End;  """
+= End;"""
 
-                    with open(f'main.vox', 'w') as file:
+                    with open('main.vox', 'w') as file:
                         file.write(code)
-                        print(i.color.set(f"File 'main.vox' create succes.", i.color.YELLOW))
+                        print(i.color.set("File 'main.vox' created successfully.", i.color.YELLOW))
+
+                    # Создание папки зависимостей
+                    deps_path = os.path.join("_voxel_", "_dependencies_")
+                    if not os.path.exists(deps_path):
+                        os.makedirs(deps_path)
+                        print(i.color.set(f"Directory '{deps_path}' created successfully.", i.color.YELLOW))
+                        
+                        # Создание тестового файла в папке зависимостей
+                        code_dependencies = """
+def main():
+    print('Hello world')"""
+                        
+                        with open(os.path.join(deps_path, 'test.py'), 'w') as file:
+                            file.write(code_dependencies)
+                            print(i.color.set("Dependencies file 'test.py' created successfully.", i.color.YELLOW))
+                    else:
+                        print('Project dependencies folder already exists')
+
                     os.chdir(current)
-                    print(i.color.set(f"Poject created =====", i.color.GREEN))
+                    print(i.color.set("Project created =====", i.color.GREEN))
 
                 else:
                     print(i.color.set('Unknown command. Type "-h" for help', i.color.YELLOW))
@@ -196,3 +215,5 @@ use= main;
             except Exception as e:
                 print(i.color.set(f'Error... {e}', i.color.RED))
                 break
+
+
