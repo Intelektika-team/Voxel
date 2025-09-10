@@ -1,4 +1,4 @@
-# Voxel Language
+# Voxel Language | Intelektika-pt
 
 Voxel is an imperative programming language inspired by Brainfuck, featuring an expanded syntax and the ability to be transpiled into Python code. The project includes an interpreter, a transpiler, and a full-featured command-line interface (CLI) for working with code.
 
