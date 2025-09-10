@@ -60,4 +60,6 @@ pyl= print("Hello, //s world!");
 
 ---
 
-Author - pt.
+Author - pt. 
+
+Intelektika-team - 2025
