@@ -17,7 +17,7 @@ Voxel is an imperative programming language inspired by Brainfuck, featuring an 
 1.  Ensure you have Python 3.6+ (3.9+ recomended) and `pip` installed.
 2.  Download raw archive.
 3.  Install the package:
-    *   **Linux/macOS:** Run `./setup-unix.sh`
+    *   **Linux/macOS:** Run `bash setup-unix.sh`
     *   **Windows:** Run `setup-win.bat`
 
 ## Usage
@@ -30,6 +30,7 @@ voxel
 Inside the CLI, the following commands are available:
 *   `new <project_name>` — create a new project.
 *   `build <input.vox> <output.py>` — compile a `.vox` file into `.py`.
+*   `builldstd` - compile a `main.vox` file into `_voxel_/build.py`.
 *   `debug <input.vox>` — run code debugging.
 *   `help` — show help for all commands.
 
