@@ -5,7 +5,7 @@ with open("README.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name='voxl',
-    version='0.5',
+    version='0.6',
     description='The voxel language api', 
     author='pt',
     author_email='kvantorium73.int@gmail.com',

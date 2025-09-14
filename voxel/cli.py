@@ -15,7 +15,7 @@ l = lang.local_lang
 h = lang.handle_error
 
 
-ver_str = "v0.5.8 1st-alpha stable"
+ver_str = "v0.6.7 2nd-alpha stable"
 
 about_str = f"""
 ======= About =======
@@ -26,9 +26,10 @@ Version: {ver_str}
 
 help_str = """
 ======= Help =======
-new <name_of_ptoject> - create the project
-build <file_voxel> <file_to_convert> - convert the voxel lang to pyhton
-debug <file_vixel> - test voxel code with output
+new <name_of_project> - create the project
+build <file_voxel> <file_to_convert> - convert the voxel lang to python
+buildstd - standard convert the voxel lang file 'main.vox' to python build 'build.py'
+debug <file_voxel> - test voxel code with output
 cd <dir> - change current dir
 ls - show available files in current dir
 restart - restart voxel cli
@@ -67,20 +68,36 @@ def __main__():
             try:
                 cpath = lang.color.blue(os.getcwd())
                 inps = input(f"\n{cpath} => ")
-                if inps == 'prev':
+                if inps in ('prev', 'p'):
                     inps = prev[-1]
 
                 inp = inps.split()
 
-                if inp[0] in ['build', '-b']:
+                if inp[0] in ('build', '-b'):
                     try:
                         path = f"{inp[1]}"
                         print(i.color.set(f'Building {path} to {inp[2]}...', i.color.YELLOW))
                         with open(path, 'r') as f:
                             file = f.read()
-                            print(i.color.set(f'Open succes... \n Build...', i.color.YELLOW))
+                            print(i.color.set(f'Open success... \n Build...', i.color.YELLOW))
                             lang.builder(file, inp[2])
-                            print(i.color.set(f'\nBuild succes...', i.color.GREEN))
+                            print(i.color.set(f'\nBuild success...', i.color.GREEN))
+                    except FileNotFoundError:
+                        print(lang.Errors.SystemERROR(f'File not found.', False))
+
+
+                    except Exception as e:
+                        lang.Errors.SystemERROR(f'Error. {e}', False)
+
+                elif inp[0] in ('buildstd', '-bs'):
+                    try:
+                        path = f"main.vox"
+                        print(i.color.set(f'Building {path} to build.py...', i.color.YELLOW))
+                        with open(path, 'r') as f:
+                            file = f.read()
+                            print(i.color.set(f'Open success... \n Build...', i.color.YELLOW))
+                            lang.builder(file, "build.py")
+                            print(i.color.set(f'\nBuild success...', i.color.GREEN))
                     except FileNotFoundError:
                         print(lang.Errors.SystemERROR(f'File not found.', False))
 
@@ -91,14 +108,14 @@ def __main__():
                 elif inp[0] in ['-d', 'debug', 'deb']:
                     try:
                         path = f"{inp[1]}"
-                        print(i.color.set('Debuging start ===', i.color.GREEN))
+                        print(i.color.set('Debuting start ===', i.color.GREEN))
                         print(i.color.set(f'Opening {path}...', i.color.YELLOW))
                         with open(path, 'r') as f:
                             file = f.read()
-                            print(i.color.set(f'Open succes... \nRuning...', i.color.YELLOW))
+                            print(i.color.set(f'Open success... \nRunning...', i.color.YELLOW))
                             p.parse(file)
                             print(i.color.set(f'Running succes...', i.color.GREEN))
-                        print(i.color.set(f'Debug succes =====', i.color.GREEN))
+                        print(i.color.set(f'Debug success =====', i.color.GREEN))
                     except FileNotFoundError:
                         lang.Errors.SystemERROR(f'File not found.', False)
 
@@ -148,30 +165,29 @@ def __main__():
                     os.chdir(name)
                     
                     # Создание основного файла
-                    code = """= Hello_user!_That's_the_basic_structure_of_voxel_programm._We_recomended_to_write_code_like_that.;
+                    code = """//= Hello user! That's the basic structure of voxel program. We recommended to write code like that.;
+@start; //= !WARNING! - @start should be outside of functions;
 
 :voxel-setup-{
-    @start /:
     @include= tape /:
-    @include= first_programm /:
-    = Your_setup-voxel_here /:
+    @include= first_program /:
+    //= Your setup-voxel here /:
+};
+:voxel-program-{
+    pyl= main("User") /:
+    //= Your program-voxel here /:
 };
 
-:voxel-programm-{
-    pyl= main('User') /:
-    = Your_program-voxel_here /:
-};
 
-= Start;
-
+//= Start;
 :voxel-main-{
     use= setup /:
-    use= programm /:
-    = Your_main-voxel_here /:
+    use= program /:
+    //= Your main-voxel here /:
 };
-
 use= main;
-= End;"""
+:exit; //= End;
+"""
 
                     with open('main.vox', 'w') as file:
                         file.write(code)
@@ -201,11 +217,14 @@ def main():
                     print(i.color.set('Unknown command. Type "-h" for help', i.color.YELLOW))
                 prev.append(inps)
 
+            except SystemError:
+                pass
+
             except KeyboardInterrupt:
                 print(i.color.bold_blue('\n\nExit? y/n'))
                 inp_e = input()
                 if inp_e in ('', 'y'):
-                    print(i.color.set('\n\nExtiting... ', i.color.BOLD, i.color.BRIGHT_RED))
+                    print(i.color.set('\n\nExiting... ', i.color.BOLD, i.color.BRIGHT_RED))
                     time.sleep(1)
                     exit()
                 else:
