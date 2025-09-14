@@ -2,6 +2,9 @@
 
 Voxel is an imperative programming language inspired by Brainfuck, featuring an expanded syntax and the ability to be transpiled into Python code. The project includes an interpreter, a transpiler, and a full-featured command-line interface (CLI) for working with code.
 
+<img width="615" height="270" alt="Снимок экрана 2025-09-14 в 16 40 36" src="https://github.com/user-attachments/assets/a249f846-eba0-4c3a-a65e-e8f39e9c28ed" />
+
+
 ## Features
 
 *   **Interpreter & Transpiler:** Voxel code can be executed directly by the interpreter or transpiled into an executable Python file.
@@ -16,9 +19,15 @@ Voxel is an imperative programming language inspired by Brainfuck, featuring an 
 
 1.  Ensure you have Python 3.6+ (3.9+ recomended) and `pip` installed.
 2.  Download raw archive.
-3.  Install the package:
+3.  Unzip archive in free folder
+4.  Install the package:
     *   **Linux/macOS:** Run `bash setup-unix.sh`
-    *   **Windows:** Run `setup-win.bat`
+    *   **Windows:** Open `setup-win.bat`
+5.  Install VSCode extension:
+    * Open folder with unziped archive in VSCode.
+    * Open folder dist.
+    * Right click on the file with the .vsix extension and select 'Install Extension VSIX'
+<img width="520" height="551" alt="Снимок экрана 2025-09-14 в 16 47 33" src="https://github.com/user-attachments/assets/ad381729-1548-43a8-bebe-6e621ba1608a" />
 
 ## Usage
 
@@ -27,6 +36,8 @@ Launch the Voxel command shell:
 ```bash
 voxel
 ```
+<img width="604" height="253" alt="Снимок экрана 2025-09-14 в 16 42 25" src="https://github.com/user-attachments/assets/4c99ac07-4830-4672-b237-24ede2029617" />
+
 Inside the CLI, the following commands are available:
 *   `new <project_name>` — create a new project.
 *   `build <input.vox> <output.py>` — compile a `.vox` file into `.py`.
