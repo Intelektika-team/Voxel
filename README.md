@@ -64,7 +64,7 @@ Example "Hello World" program:
 use= main;
 ```
 
-or just
+or just-
 ```voxel
 pyl= print("Hello, //s world!");
 ```
