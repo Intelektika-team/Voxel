@@ -5,7 +5,7 @@ with open("README.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name='voxl',
-    version='0.6',
+    version='0.7',
     description='The voxel language api', 
     author='pt',
     author_email='kvantorium73.int@gmail.com',
@@ -18,6 +18,7 @@ setup(
     entry_points={
         'console_scripts': [
             'voxel=voxel.cli:__main__',
+            'vxl=voxel.vxltool:main',
         ],
     },
     python_requires='>=3.6',

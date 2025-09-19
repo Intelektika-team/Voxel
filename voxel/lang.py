@@ -1,5 +1,7 @@
 from voxel.interface import *
 
+ver_str = "v0.7.5 1st-beta stable"
+
 
 class Errors:
     def SyntaxERROR(text :str, exiting :bool=True):
@@ -11,23 +13,23 @@ class Errors:
         if exiting: raise SystemError()
 
     def ErrorHANDLER(text :str, exiting :bool=True):
-        print(color.set(f"Handled Error - {text}", color.YELLOW))
+        print(color.set(f"\nHandled Error - {text}", color.YELLOW))
         if exiting: raise SystemError()
     
     def NotFoundERROR(text :str, exiting :bool=True):
-        print(color.set(f"Not found - {text}", color.YELLOW))
+        print(color.set(f"\nNot found - {text}", color.YELLOW))
         if exiting: raise SystemError()
     
     def IncludeERROR(text :str, exiting :bool=True):
-        print(color.set(f"Error in include - {text}", color.YELLOW))
+        print(color.set(f"\nError in include - {text}", color.YELLOW))
         if exiting: raise SystemError()
 
     def FileERROR(text :str, exiting :bool=True):
-        print(color.set(f"File error - {text}", color.YELLOW))
+        print(color.set(f"\nFile error - {text}", color.YELLOW))
         if exiting: raise SystemError()
 
     def ParamERROR(text :str, exiting :bool=True):
-        print(color.set(f"Parameter error - {text}", color.YELLOW))
+        print(color.set(f"\nParameter error - {text}", color.YELLOW))
         if exiting: raise SystemError()
 
 def handle_error(exiting=True):
@@ -44,9 +46,11 @@ def handle_error(exiting=True):
 def spacedelete(code):
     return code.replace(' ', '').replace('\n', '')
 
-
+constants = {}
 points = {}
 params = {}
+logs = []
+logcount = 0
 
 class VoxelParser:
     def __init__(self):
@@ -56,6 +60,7 @@ class VoxelParser:
         self.commands[command] = {'f':function, 'a':args, 'la':langargs}
     
     def parse(self, code :str, sep :str=';'):
+        rawcode = code.split(sep)
         code = spacedelete(code).split(sep) # Delete space and newlines from code
         now = 0 # Line counter
         for i in code:
@@ -75,6 +80,8 @@ class VoxelParser:
                         raise SystemError()
                     points[splitted[1]] = splitted[2] # Set points[name] = function_body
                     worked = True
+                
+                
                 elif command.startswith(':param'): # Parse parameters
                     try:
                         splitted = i.split('-', 1)
@@ -86,12 +93,63 @@ class VoxelParser:
                         except:
                             try: data = float(data.replace('f', '')) # Parse to float
                             except: data = str(data)
-                    except:
-                        raise SystemError()
+                    except Exception as e:
+                        raise SystemError(f"Error in 'params' parser: {e}")
                     params[name] = data
                     
                     worked = True
+                
+                elif command.startswith(':const'): # Parse constants
+                    try:
+                        splitted = i.split('-', 1)
+                        splitted1 = splitted[1].split('=')
+                        name = splitted1[0]
+                        data = splitted1[1] # Data can be str (just string, like 'test'), int (just int, like '1') list (just array), or float (must starts with 'f', like 'f10.14')
+                        # Data convert from string
+                        try: data = int(data)
+                        except:
+                            try: data = float(data.replace('f', '')) # Parse to float
+                            except: data = str(data)
+                    except Exception as e:
+                        raise SystemError(f"Error in 'const' parser: {e}")
+                    constants[name] = data
+                    
+                    worked = True
+                
+                elif command.startswith(':log.new'):  # Parse log.new
+                    try:
+                        global logcount
+                        global logs
+                        splitted = i.split('(', 1)
+                        if splitted[1].endswith(')'): pass
+                        else: Errors.SyntaxERROR("Log.new error: log new must be look like ':log.new(text)'.")
+                        info = rawcode[now-1].split('(')[1].replace(')', '').replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"')
+                        text = f'=== log {logcount}: {info} ==='
+                        logs.append(text)
+                        logcount += 1
+                    except Exception as e:
+                        raise SystemError(f"Error in 'log.new' parser: {e}")
+                    worked = True
+                
+                elif command.startswith(':log.out'):  # Parse log.output
+                    try:
+                        print("\n".join(logs))
+                    except Exception as e:
+                        raise SystemError(f"Error in 'log.out' parser: {e}")
+                    worked = True
 
+                elif command.startswith(':sys.out'):  # Parse system.output
+                    try:
+                        splitted = i.split('(', 1)
+                        if splitted[1].endswith(')'): pass
+                        else: Errors.SyntaxERROR("Sys.out error: sys out must be look like ':sys.out(text)'.")
+                        info = rawcode[now-1].split('(')[1].replace(')', '').replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"')
+                        print(info, end='')
+                        
+                    except Exception as e:
+                        raise SystemError(f"Error in 'sys.out' parser: {e}")
+                    worked = True
+                
                 elif command.startswith(':exit'):  # Parse exit
                     break
 
@@ -122,7 +180,7 @@ class VoxelLang:
         self.libs = {"tape":{"lib":f"tape, pos = {self.tape}, {self.pos}", "used":False},"stdio":
         {"lib":"""
 
-# MARK: Standart pyl library 
+# Standart pyl library 
 class color:
     # Base colors
     BLACK = '\033[30m'
@@ -281,7 +339,6 @@ def main(user :str='Guest'):
 }
         
 
-        self.code.append(f"\n # MARK: System")
         self.code.append(
 """
 import os, platform, time
@@ -317,12 +374,44 @@ import os, platform, time
         except ValueError:
             return rawdata
 
+    @handle_error()
+    def calc_variables(self):
+        variables = {}
+        self.alreadywas = []
+        
+        # Обрабатываем параметры (должны быть в нижнем регистре)
+        for key in params:
+            if key != key.lower():
+                raise SystemError('Params must be lowercased.')
+            variables[key.lower()] = params[key]
+        
+        # Обрабатываем константы (должны быть в верхнем регистре)
+        for key in constants:
+            if key != key.upper():
+                raise SystemError('Constants must be uppercased')
+            value = constants[key]
+            variables[key.upper()] = value
+            
+            # Форматируем значение в зависимости от типа
+            if isinstance(value, str):
+                # Экранирование специальных символов для строк
+                if '\n' in value:
+                    formatted_value = f"'''{value}'''"
+                formatted_value = repr(value)
+            else:
+                formatted_value = str(value)
+            
+            if key.upper() in self.alreadywas: pass
+            else: self.code.append(f"{key.upper()} = {formatted_value}")
+            self.alreadywas.append(key.upper()) 
+        
+        return variables
 
     @handle_error()
     def data(self, arg_str:str =""):
-        self.variables = params
+        self.variables = self.calc_variables()
         result = arg_str
-        if arg_str in params:
+        if arg_str in self.variables:
             data = self.variables[arg_str]
             if data == "?":
                 result = self.pos
@@ -421,12 +510,12 @@ import os, platform, time
     
     @handle_error()
     def output_char(self, arg_str: str = ""):
-        t = chr(self.tape[self.pos])
+        t = chr(int(self.tape[self.pos]))
         print(t, end='')
-        self.code.append(f"print(chr(tape[pos]), end='')")
+        self.code.append(f"print(chr(int(tape[pos])), end='')")
     
     @handle_error()
-    def output_num(self, arg_str: str = ""):
+    def output_now(self, arg_str: str = ""):
         t = self.tape[self.pos]
         print(t, end='')
         self.code.append(f"print(tape[pos], end='')")
@@ -484,12 +573,13 @@ import os, platform, time
 
     @handle_error()
     def topython_param(self, arg_str: str = ""):
-        if arg_str in params:
+        self.data('update')
+        if arg_str in self.variables:
             types = str(type(params[arg_str])).replace("<class '", '').replace("'>", '')
-            if types in ('float', 'int'):
-                self.code.append(f"{arg_str} = {params[arg_str]}")
-            elif types == 'str':
+            if types == 'str':
                 self.code.append(f"{arg_str} = '''{params[arg_str]}'''")
+            else:
+                self.code.append(f"{arg_str} = {params[arg_str]}")
         else:
             Errors.ParamERROR(f"Parameter {arg_str} not found.")
 
@@ -540,7 +630,8 @@ import os, platform, time
     
     @handle_error()
     def type_param(self, arg_str: str=""):
-        if arg_str in params:
+        self.data('update')
+        if arg_str in self.variables:
             types = str(type(self.data(arg_str))).replace("<class '", '').replace("'>", '')
             print(types, end='')
             self.code.append(f"print({types}, end='')")
@@ -550,7 +641,12 @@ import os, platform, time
     @handle_error()
     def input_num(self, arg_str: str = ""):
         self.tape[self.pos] = int(input(arg_str))
-        self.code.append(f"tape[pos] = input({arg_str})")
+        self.code.append(f"tape[pos] = int(input({arg_str}))")
+    
+    @handle_error()
+    def input_str(self, arg_str: str = ""):
+        self.tape[self.pos] = str(input(arg_str))
+        self.code.append(f"tape[pos] = str(input({arg_str}))")
 
     @handle_error()
     def comentary(self, arg_str: str = ""):
@@ -625,12 +721,38 @@ tape[{pos}] = _current
         
         # Make full path
         full_file_path = os.path.join(cache_dir, path)
-        
+        full_config_path = os.path.join(os.getcwd(), 'init.voxel')
+
+        with open(full_config_path, 'r') as f:
+            file = f.read()
+            config = file.split(';')
+        print('Configurating... \n=', end='')
+        result = []
+        try:
+            description = config[5].split('-', 1)[1] ;print('=', end='')
+            description = description[1:] if description[0] == ' ' else description ;print('=', end='')
+            author = config[4].split('-', 1)[1] ;print('=', end='')
+            author = author[1:] if author[0] == ' ' else author ;print('=', end='')
+            version = config[3].split('-', 1)[1] ;print('=', end='')
+            version = version[1:] if version[0] == ' ' else version ;print('=', end='')
+            verlang = config[2].split('-', 1)[1] ;print('=', end='')
+            verlang = verlang[1:] if verlang[0] == ' ' else verlang ;print('=', end='')
+            projpath = config[0].split('-', 1)[1] ;print('=', end='')
+            projpath = projpath[1:] if projpath[0] == ' ' else projpath ;print('=', end='')
+        except Exception as e: 
+            if str(e).strip() == 'list index out of range'.strip(): Errors.FileERROR(f"\nConfig is so old or incorrect")
+            else: Errors.FileERROR(f"\nConfig parse error: {e}")
+        if verlang.strip() != ver_str.strip(): Errors.SystemERROR(f"\nLanguage version isn't support. Current version: {ver_str}")
+        print('\nConfigure compleate...')
+
+
         # Generate and write code to build file
         code = "\n".join(self.getcode())
+        logsr = '\n'.join(logs)
+        result = "\n".join([f"'''\n=== LOGS ===\n{logsr}\n=== LOGS ===\n'''", '# MARK: Constants', f'AUTHOR = "{author}"; VERSION = "{version}"; LANGUAGE = "{verlang}"; PATH = "{projpath}"', f"DESCRIPTION = '''{description}'''", '# MARK: Code', code])
         
         with open(full_file_path, 'w') as f:
-            f.write(code)
+            f.write(result)
         
         print(f'Done. File saved to: {full_file_path}')
     
@@ -670,17 +792,19 @@ local_parser.add_command('/', local_lang.divission, langargs=True)
 local_parser.add_command('<>', local_lang.swap, langargs=True)
 local_parser.add_command('!0', local_lang.erase, langargs=True)
 local_parser.add_command('out.char', local_lang.output_char, langargs=True)
-local_parser.add_command('out.num', local_lang.output_num, langargs=True)
+local_parser.add_command('out.now', local_lang.output_now, langargs=True)
 local_parser.add_command('out.str', local_lang.print, langargs=True)
 local_parser.add_command('out.next', local_lang.output_next, langargs=True)
 local_parser.add_command('out.ptype', local_lang.type_param, langargs=True)
 local_parser.add_command('in.char', local_lang.input_char, langargs=True)
 local_parser.add_command('in.num', local_lang.input_num, langargs=True)
+local_parser.add_command('in.str', local_lang.input_str, langargs=True)
 local_parser.add_command('', local_lang.comentary, langargs=True)
 local_parser.add_command('//', local_lang.comentary, langargs=True)
 local_parser.add_command('@include', local_lang.include, langargs=True)
 local_parser.add_command('@import', local_lang.import_func, langargs=True)
 local_parser.add_command('@retape', local_lang.retape, langargs=True)
+local_parser.add_command('@updata', local_lang.data, args='update') #for update data
 
 def use(arg_str: str=""):
     if arg_str in points:
@@ -731,11 +855,19 @@ def fori(arg_str :str=""):
     f = inp[1]
     for i in range(u):
         use(f)
+def drelog(arg_str :str=""):
+    global logs
+    logs = []
+    
+    local_lang.reset()
+local_parser.add_command('@relog', drelog)
 local_parser.add_command('for', fori, langargs=True)
 def start(arg_str :str=""):
     global params
     global points
+    global constants
     points = {}
+    constants = {}
     params = {}
     local_lang.reset()
 local_parser.add_command('@start', start, langargs=True)
@@ -759,11 +891,12 @@ def builder(text: str, path: str = 'build.py'):
     dlocal_parser.add_command('ers', dlocal_lang.erase, langargs=True)
     dlocal_parser.add_command('!0', dlocal_lang.erase, langargs=True)
     dlocal_parser.add_command('out.char', dlocal_lang.output_char, langargs=True)
-    dlocal_parser.add_command('out.num', dlocal_lang.output_num, langargs=True)
+    dlocal_parser.add_command('out.now', dlocal_lang.output_now, langargs=True)
     dlocal_parser.add_command('out.str', dlocal_lang.print, langargs=True)
     dlocal_parser.add_command('out.next', dlocal_lang.output_next, langargs=True)
     dlocal_parser.add_command('in.char', dlocal_lang.input_char, langargs=True)
     dlocal_parser.add_command('in.num', dlocal_lang.input_num, langargs=True)
+    dlocal_parser.add_command('in.str', dlocal_lang.input_str, langargs=True)
     dlocal_parser.add_command('', dlocal_lang.comentary, langargs=True)
     dlocal_parser.add_command('//', dlocal_lang.comentary, langargs=True)
     dlocal_parser.add_command('?', dlocal_lang.where, langargs=True)
@@ -788,12 +921,20 @@ def builder(text: str, path: str = 'build.py'):
     dlocal_parser.add_command('@include', dlocal_lang.include, langargs=True)
     dlocal_parser.add_command('@import', dlocal_lang.import_func, langargs=True)
     dlocal_parser.add_command('@retape', dlocal_lang.retape, langargs=True)
+    dlocal_parser.add_command('@updata', dlocal_lang.data, args='update') #for update data
+    def drelog(arg_str :str=""):
+        global logs
+        logs = []
+    dlocal_parser.add_command('@relog', drelog)
 
     def dstart(arg_str :str=""):
         global params
         global points
+        global constants
         points = {}
         params = {}
+        constants = {}
+        
         dlocal_lang.reset()
     dlocal_parser.add_command('@start', dstart, langargs=True)
 
@@ -860,6 +1001,7 @@ if __name__=="__main__":
     local_parser.parse(
 """
 //= Start;
+:log.new(STARTING...);
 nxt=10; pls=12; 
 :param-test=?;
 :param-f=10;
@@ -910,5 +1052,22 @@ use= main;
 >; >; ?; out.next;
 :param-list=[1, ?, 'value'];
 out.str=list; out.ptype=list; out.str="//n text //s value";
+:const-TEST=19; out.ptype = TEST;
+out.str=//form TEST; :const-TEST2=10; @updata;
+:sys.out(Some text);
+:log.new(ENDING...);
+:sys.out(\n); :log.out;
 //= End;
+
+//= WARNING - comentary always must starts from //= and ends with;
+//= WARNING - comments like '// ...' do not exist;
+:voxel-if_zero-{
+    out.str="Zero!" /:+
+};
+
+:voxel-if_not_zero-{
+    out.str="Not zero!" /:-
+};
+jz=if_zero;
+jnz=if_not_zero; 
 """)
