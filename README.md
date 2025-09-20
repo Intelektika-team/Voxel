@@ -22,6 +22,12 @@ Voxel is an imperative programming language inspired by Brainfuck, featuring an 
 *   **Command Line Interface (CLI):** Interactive shell for project creation, debugging, and code building.
 *   **Cross-Platform:** Works on Windows and UNIX systems.
 
+## Why is it needed?
+
+- **Scripting**: Voxel is a lightweight and embedded language that translates directly into Python, making it ideal for writing small (and large) scripts.
+- **Development at the junction**: With Voxel, you can create applications that use low-level tape and high-level Python at the same time.
+- **Smart Database**: Voxel allows you to move projects to a special folder _voxel_/_dependencies_ and use it as a package manager, and also provides the ability to treat the ribbon as a huge database with cells.
+
 ## Installation
 
 1.  Ensure you have Python 3.6+ (3.9+ recommended) and `pip` installed.
