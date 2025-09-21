@@ -175,8 +175,12 @@ Voxel combines the low-level tape manipulation of Brainfuck with high-level cons
 :log.out; // Output all logs
 ```
 
-#### Python Integration
+#### Python & bash Integration
 ```voxel
+//= Bash;
+bash= echo //s Hello, //s World; //= Simple output;
+bash= vxl //s -i //s html; //= Vxl usage;
+
 //= Single line Python;
 pyl= print("Inline Python code");
 
