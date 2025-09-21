@@ -84,28 +84,136 @@ Example of using an installed package:
 }; pylpaste= get;
 ```
 
+## Syntax
 
-## Code Example
+Voxel combines the low-level tape manipulation of Brainfuck with high-level constructs, offering a unique and powerful syntax for various programming tasks.
 
-Example "Hello World" program:
+### Basic Structure
+- **Commands** are separated by semicolons `;`.
+- **Comments** start with `//=` and end with a semicolon:  
+  `//= This is a comment;`
+- **Voxels** (reusable code blocks) are defined with `:voxel-name-{...}` and called with `use= name`.
+- **Parameters** (variables) are defined with `:param-name=value`.
+- **Constants** are defined with `:const-NAME=value`.
+
+### Core Commands
+
+#### Tape Manipulation
+| Command | Alias | Description |
+| :--- | :--- | :--- |
+| `nxt= N` | `>` | Move pointer right by `N` steps (default: 1) |
+| `prv= N` | `<` | Move pointer left by `N` steps (default: 1) |
+| `jmp= N` | | Move pointer to absolute position `N` |
+| `pls= N` | `+` | Increase current cell value by `N` (default: 1) |
+| `mns= N` | `-` | Decrease current cell value by `N` (default: 1) |
+| `set= VALUE` | | Set current cell to `VALUE` (number, string, or expression) |
+| `ers` | `!0` | Set current cell to 0 |
+| `mov= N` | `>/` | Copy current cell value to position `N` |
+| `swp= N` | `<>` | Swap values between current cell and cell at `N` |
+| `mlt= N` | `*` | Multiply current cell by `N` |
+| `dvs= N` | `/` | Divide current cell by `N` |
+
+#### I/O Operations
+| Command | Description |
+| :--- | :--- |
+| `out.char` | Output current cell value as ASCII character |
+| `out.now` | Output raw current cell value |
+| `out.str= TEXT` | Output text string (use `//s` for spaces, `//n` for newlines) |
+| `out.next` | Output newline character |
+| `in.char` | Read input character and store its ASCII value |
+| `in.num` | Read input number |
+| `in.str` | Read input string |
+
+#### Flow Control
+| Command | Description |
+| :--- | :--- |
+| `jz= LABEL` | Jump to voxel if current cell == 0 |
+| `jnz= LABEL` | Jump to voxel if current cell != 0 |
+| `jo= LABEL` | Jump to voxel if current cell == 1 |
+| `jno= LABEL` | Jump to voxel if current cell != 1 |
+| `jf= A,B` | Jump to voxel B if current cell == value A |
+| `jnz= A,B` | Jump to voxel B if current cell != value A |
+| `for= N,LABEL` | Execute voxel `N` times |
+
+### Advanced Features
+
+#### Meta-Commands
+| Command | Description |
+| :--- | :--- |
+| `@include= LIB` | Include standard library (`tape`, `stdio`, `base`) |
+| `@import= MOD,ALIAS` | Import Python module as alias |
+| `@retape= SIZE` | Resize tape to new length |
+| `@start` | Reset tape and pointer |
+| `@relog` | Clear log buffer |
+
+#### Special Constructs
 ```voxel
-@include= stdio;
-@include= tape;
+//= Define reusable code block;
+:voxel-print_hello-{
+    out.str= Hello//sWorld!/: out.next/:
+};
 
-:voxel-main-{
-    set= 72 /: out.char/: set= 101 /: out.char /: set= 108 /:
-    out.char /: out.char /: set= 111 /: out.char /:
-    set= 32 /: out.char /:
-    set= 87 /: out.char /: set= 111 /: out.char /: set= 108 /:
-    out.char /: set= 108 /: out.char /: set= 100 /: out.char /:
-    set= 33 /: out.char /: out.next
-}; use= main;
+//= Define parameter with value;
+:param-count= 10; //= Type: int (10);
+:param-message= Hello; //= Type: str ('Hello');
+:param-message= f10; //= Type: float (10.0);
+
+//= Define constant value;
+:const-TIMEOUT= 1000;
+
+//= Multi-line Python integration;
+:pyl-math_code-{
+    result = 2 + 2 * 2
+    print(f"Result: {result}")
+};
+
+//= System output;
+:sys.out(Text with spaces);
+
+//= Logging;
+:log.new(Operation completed);
+:log.out; // Output all logs
 ```
 
-or just:
+#### Python Integration
 ```voxel
-out.str= Hello, //s World!;
+//= Single line Python;
+pyl= print("Inline Python code");
+
+//= Multi-line Python block;
+:pyl-custom_logic-{
+    import requests
+    response = requests.get('https://api.example.com')
+    print(response.status_code)
+};
+
+//= Use defined Python code;
+pylpaste= custom_logic;
 ```
+
+#### Expressions and Variables
+```voxel
+//= Use current position (?);
+:param-current_pos=?;
+
+//= Use current cell value (!);
+:param-cell_value=!;
+
+//= List with dynamic values;
+:param-data=[1, ?, !, 'text'];
+
+//= Parameter math operations;
+ppl= count, 1;    //= count += 1;
+pmn= count, 1;    //= count -= 1;
+pmp= count, 2;    //= count *= 2;
+pdv= count, 2;    //= count /= 2;
+
+//= Type checking;
+out.ptype= param_name;  //= Output parameter type;
+```
+
+
+
 
 
 ## Package Repository
