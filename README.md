@@ -3,8 +3,9 @@
 
 [![Vxl](https://img.shields.io/badge/Vxl-tool-brightgreen?style=for-the-badge)](https://github.com/Intelektika-team/vxl)
 [![Voxel Lang](https://img.shields.io/badge/Voxel-Lang-orange?style=for-the-badge)](https://github.com/Intelektika-team/Voxel)
-[![inf](https://img.shields.io/badge/Version-0.7.2-blue?style=for-the-badge)](#)
-[![inf](https://img.shields.io/badge/Join-us-red?style=for-the-badge)](https://intelektika-team.github.io/)
+[![Version](https://img.shields.io/badge/Version-0.7.2-blue?style=for-the-badge)](#)
+[![Join](https://img.shields.io/badge/Join-us-red?style=for-the-badge)](https://intelektika-team.github.io/)
+[![Team](https://img.shields.io/badge/Our-team-yellow?style=for-the-badge)](https://github.com/Intelektika-team)
 
 
 Voxel is an imperative programming language inspired by Brainfuck, featuring an expanded syntax and the ability to be transpiled into Python code. The project includes an interpreter, a transpiler, and a full-featured command-line interface (CLI) for working with code.
@@ -78,11 +79,11 @@ Example of using an installed package:
 @import= http_utils, http;
 
 :pyl-get-{
-    pyl= data = http.get("https://api.example.com/data") /:
-    pyl= print(data) /:
-};
-pylpaste= get;
+    pyl= data = http.get("https://api.example.com/data") 
+    pyl= print(data)
+}; pylpaste= get;
 ```
+
 
 ## Code Example
 
@@ -92,13 +93,13 @@ Example "Hello World" program:
 @include= tape;
 
 :voxel-main-{
-    set= 72 /: out.char/: set= 101 /: out.char /: set= 108 /: out.char /: out.char /: set= 111 /: out.char /:
+    set= 72 /: out.char/: set= 101 /: out.char /: set= 108 /:
+    out.char /: out.char /: set= 111 /: out.char /:
     set= 32 /: out.char /:
-    set= 87 /: out.char /: set= 111 /: out.char /: set= 108 /: out.char /: set= 108 /: out.char /: set= 100 /: out.char /:
+    set= 87 /: out.char /: set= 111 /: out.char /: set= 108 /:
+    out.char /: set= 108 /: out.char /: set= 100 /: out.char /:
     set= 33 /: out.char /: out.next
-};
-
-use= main;
+}; use= main;
 ```
 
 or just:
@@ -106,10 +107,11 @@ or just:
 out.str= Hello, //s World!;
 ```
 
+
 ## Package Repository
 
 Discover and share packages through our official repository:
-[VXL Official Package Repository](https://github.com/Intelektika-team/vxl-packages)
+[VXL Official Package Repository](https://github.com/Intelektika-team/vxl)
 
 Contribute your own packages by submitting pull requests to the repository!
 
@@ -117,4 +119,4 @@ Contribute your own packages by submitting pull requests to the repository!
 
 Author - pt. 
 
-Intelektika-team - 2025
+Intelektika-team - started at 2025 - VoxelLang
