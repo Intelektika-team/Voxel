@@ -62,30 +62,7 @@ Inside the CLI, the following commands are available:
 
 The `vxl` tool is a powerful package manager and build tool for Voxel projects:
 
-**Creating a new project:**
-```bash
-vxl -n my_project
-```
-
-**Building a Voxel file:**
-```bash
-vxl -b main.vox output.py
-```
-
-**Building and running immediately:**
-```bash
-vxl -br main.vox output.py
-```
-
-**Installing packages from official repository:**
-```bash
-vxl -i package_name
-```
-
-**Installing packages from custom GitHub repositories:**
-```bash
-vxl -if user/repo package_name
-```
+<img width="1232" height="729" alt="Снимок экрана 2025-09-21 в 20 49 48" src="https://github.com/user-attachments/assets/6f00b839-65ae-47e5-b9c7-55861b94f076" />
 
 **Additional commands:**
 ```bash
@@ -101,12 +78,11 @@ Example of using an installed package:
 @include= stdio;
 @import= http_utils, http;
 
-:voxel-main-{
+:pyl-get-{
     pyl= data = http.get("https://api.example.com/data") /:
     pyl= print(data) /:
 };
-
-use= main;
+pylpaste= get;
 ```
 
 ## Code Example
