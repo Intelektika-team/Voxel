@@ -9,7 +9,7 @@
 
 Voxel is an imperative programming language inspired by Brainfuck, featuring an expanded syntax and the ability to be transpiled into Python code. The project includes an interpreter, a transpiler, and a full-featured command-line interface (CLI) for working with code.
 
-<img width="615" height="270" alt="Voxel Language Overview" src="https://github.com/user-attachments/assets/a249f846-eba0-4c3a-a65e-e8f39e9c28ed" />
+<img width="922" height="445" alt="Снимок экрана 2025-09-21 в 21 02 11" src="https://github.com/user-attachments/assets/f398b34c-69ad-463d-8ca3-ce5de8185453" />
 
 ## Features
 
@@ -40,7 +40,6 @@ Voxel is an imperative programming language inspired by Brainfuck, featuring an 
     * Open folder with unzipped archive in VSCode.
     * Open folder dist.
     * Right click on the file with the .vsix extension and select 'Install Extension VSIX'
-<img width="520" height="551" alt="VSCode Extension Installation" src="https://github.com/user-attachments/assets/ad381729-1548-43a8-bebe-6e621ba1608a" />
 
 ## Usage
 
@@ -49,7 +48,7 @@ Launch the Voxel command shell:
 ```bash
 voxel
 ```
-<img width="604" height="253" alt="Voxel CLI Interface" src="https://github.com/user-attachments/assets/4c99ac07-4830-4672-b237-24ede2029617" />
+<img width="1006" height="492" alt="Снимок экрана 2025-09-21 в 20 58 02" src="https://github.com/user-attachments/assets/40256597-2d93-439f-8664-197ca0db6463" />
 
 Inside the CLI, the following commands are available:
 *   `new <project_name>` — create a new project.
@@ -62,7 +61,7 @@ Inside the CLI, the following commands are available:
 
 The `vxl` tool is a powerful package manager and build tool for Voxel projects:
 
-<img width="1232" height="729" alt="Снимок экрана 2025-09-21 в 20 49 48" src="https://github.com/user-attachments/assets/6f00b839-65ae-47e5-b9c7-55861b94f076" />
+<img width="1067" height="694" alt="Снимок экрана 2025-09-21 в 20 57 45" src="https://github.com/user-attachments/assets/c1b9e18b-e18f-4ea9-8796-c766f830a51e" />
 
 **Additional commands:**
 ```bash
@@ -104,7 +103,7 @@ use= main;
 
 or just:
 ```voxel
-pyl= print("Hello, //s world!");
+out.str= Hello, //s World!;
 ```
 
 ## Package Repository
