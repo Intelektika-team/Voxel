@@ -44,11 +44,12 @@ def handle_error(exiting=True):
     return decorator
 
 def spacedelete(code):
-    return code.replace(' ', '').replace('\n', '')
+    return code.replace(' ', '')
 
 constants = {}
 points = {}
 params = {}
+pythonlines = {}
 logs = []
 logcount = 0
 
@@ -61,15 +62,18 @@ class VoxelParser:
     
     def parse(self, code :str, sep :str=';'):
         rawcode = code.split(sep)
-        code = spacedelete(code).split(sep) # Delete space and newlines from code
-        now = 0 # Line counter
+        code = code.replace(' ', '').split(sep) # Delete space and newlines from code
+        newcode = []
         for i in code:
+            newcode.append(i.replace('\n', ''))
+        now = 0 # Line counter
+        for i in newcode:
             now += 1
             worked = False
             try:
                 try:
-                    command = i.split('=')[0] # Parse command
-                    args = i.split('=')[1] # Parse arguments
+                    command = i.split('=', 1)[0] # Parse command
+                    args = i.split('=', 1)[1] # Parse arguments
                 except:
                     command = i
                     args = ''
@@ -85,7 +89,7 @@ class VoxelParser:
                 elif command.startswith(':param'): # Parse parameters
                     try:
                         splitted = i.split('-', 1)
-                        splitted1 = splitted[1].split('=')
+                        splitted1 = splitted[1].split('=', 1)
                         name = splitted1[0]
                         data = splitted1[1] # Data can be str (just string, like 'test'), int (just int, like '1'), or float (must start with 'f', like 'f10.14')
                         # Data convert from string
@@ -102,7 +106,7 @@ class VoxelParser:
                 elif command.startswith(':const'): # Parse constants
                     try:
                         splitted = i.split('-', 1)
-                        splitted1 = splitted[1].split('=')
+                        splitted1 = splitted[1].split('=', 1)
                         name = splitted1[0]
                         data = splitted1[1] # Data can be str (just string, like 'test'), int (just int, like '1') list (just array), or float (must starts with 'f', like 'f10.14')
                         # Data convert from string
@@ -114,6 +118,17 @@ class VoxelParser:
                         raise SystemError(f"Error in 'const' parser: {e}")
                     constants[name] = data
                     
+                    worked = True
+                
+                elif command.startswith(':pyl'): # Parse python multyline code
+                    try:
+                        splitted = rawcode[now-1].split('-', 2)
+                        body = splitted[2].replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"').replace('/:', '\n').replace('}', '').replace('{', '')
+                        name = splitted[1]
+                        pythonlines[name] = body
+                    except Exception as e:
+                        raise SystemError(f"Error in 'math' parser: {e}")
+                    constants[name] = data
                     worked = True
                 
                 elif command.startswith(':log.new'):  # Parse log.new
@@ -177,7 +192,60 @@ class VoxelLang:
         self.pos = 0  # Start position in centre of tape
         self.code = []
         self.variables = {}
-        self.libs = {"tape":{"lib":f"tape, pos = {self.tape}, {self.pos}", "used":False},"stdio":
+        self.libs = {"tape":{"lib":f"""tape, pos = {self.tape}, {self.pos}
+
+
+@handle_error()
+def getpos():
+    return pos
+
+@handle_error()
+def setpos(new_pos):
+    global pos
+    pos = new_pos
+
+@handle_error()
+def find_value(value):  # Find value in tape
+    for key, val in tape.items():
+        if val == value:
+            return key
+    return None
+
+@handle_error()
+def tape_range():  
+    return min(tape.keys()), max(tape.keys())
+
+
+@handle_error()
+def data():
+    return tape[pos]
+
+@handle_error()
+def set(arg):
+    tape[pos] = arg
+""", "used":False},"base":{"lib":
+"""
+def wait(delay:int):
+    time.sleep(delay*0.001)
+
+def handle_error(exiting=True):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                Errors.ErrorHANDLER(str(e), False)
+                if exiting: exit()
+        return wrapper
+    return decorator
+
+def cls():
+    if platform.system() == 'Windows':
+        os.system('cls')
+    else:
+        os.system('clear')
+
+""", "used":False}, "stdio":
         {"lib":"""
 
 # Standart pyl library 
@@ -275,57 +343,6 @@ class Errors:
     def FileERROR(text :str, exiting :bool=True):
         print(color.set(f"File error - {text}", color.YELLOW))
         if exiting: exit()
-
-def cls():
-    if platform.system() == 'Windows':
-        os.system('cls')
-    else:
-        os.system('clear')
-
-
-def handle_error(exiting=True):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                Errors.ErrorHANDLER(str(e), False)
-                if exiting: exit()
-        return wrapper
-    return decorator
-
-
-@handle_error()
-def getpos():
-    return pos
-
-@handle_error()
-def setpos(new_pos):
-    global pos
-    pos = new_pos
-
-@handle_error()
-def find_value(value):  # Find value in tape
-    for key, val in tape.items():
-        if val == value:
-            return key
-    return None
-
-@handle_error()
-def tape_range():  
-    return min(tape.keys()), max(tape.keys())
-
-
-@handle_error()
-def data():
-    return tape[pos]
-
-@handle_error()
-def set(arg):
-    tape[pos] = arg
-
-def wait(delay:int):
-    time.sleep(delay*0.001)
 
 """, "used":False},
 
@@ -428,6 +445,13 @@ import os, platform, time
     def gentape(self, length :int):
         for i in range(length):
             self.tape[i-(length//2)] = 0
+        
+    @handle_error()
+    def code_append(self, arg_str :str=''):
+        if arg_str in pythonlines:
+            self.code.append(pythonlines[arg_str])
+        else:
+            pass
 
     @handle_error()
     def include(self, arg_str :str=''):
@@ -438,11 +462,11 @@ import os, platform, time
                     self.code.append(self.libs[arg_str]['lib'])
                     self.libs[arg_str]['used'] = True
                 elif using==True:
-                    Errors.IncludeERROR(f'Library {self.libs[arg_str]} - Already use: {using}')
+                    Errors.IncludeERROR(f'Library {self.libs[arg_str]} - Already use: {using} in {arg_str}')
             else:
                 Errors.NotFoundERROR(f"Library {arg_str} isn't found.")
         except Exception as e:
-            Errors.IncludeERROR(f'Include error: {e}')
+            Errors.IncludeERROR(f'Include error: {e}, in {arg_str}')
 
     @handle_error()
     def import_func(self, arg_str :str=''):
@@ -659,6 +683,15 @@ import os, platform, time
             n = int(self.data(arg_str))
         self.tape[self.pos] *= n
         self.code.append(f"tape[pos] *= {n}")
+    
+    @handle_error()
+    def bash(self, arg_str: str = ""):
+        try:
+            command = arg_str.replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace('\"', '').replace("//'", '"')
+            os.system(command)
+            self.code.append(f'os.system({command})')
+        except Exception as e:
+            print(f"Error in 'bash':{e}")
 
     @handle_error()
     def divission(self, arg_str: str = ""):
@@ -780,6 +813,9 @@ local_parser.add_command('pst', local_lang.set_param, langargs=True)
 local_parser.add_command('pdv', local_lang.divission_param, langargs=True)
 local_parser.add_command('pmp', local_lang.minus_param, langargs=True)
 local_parser.add_command('ptp', local_lang.topython_param, langargs=True)
+local_parser.add_command('bash', local_lang.bash, langargs=True)
+local_parser.add_command('pylpaste', local_lang.code_append, langargs=True)
+local_parser.add_command('plps', local_lang.code_append, langargs=True)
 local_parser.add_command('>', local_lang.next, langargs=True)
 local_parser.add_command('<', local_lang.prev, langargs=True)
 local_parser.add_command('+', local_lang.plus, langargs=True)
@@ -913,6 +949,9 @@ def builder(text: str, path: str = 'build.py'):
     dlocal_parser.add_command('pdv', dlocal_lang.divission_param, langargs=True)
     dlocal_parser.add_command('pmp', dlocal_lang.minus_param, langargs=True)
     dlocal_parser.add_command('ptp', dlocal_lang.topython_param, langargs=True)
+    dlocal_parser.add_command('bash', dlocal_lang.bash, langargs=True)
+    dlocal_parser.add_command('pylpaste', dlocal_lang.code_append, langargs=True)
+    dlocal_parser.add_command('plps', dlocal_lang.code_append, langargs=True)
     dlocal_parser.add_command('out.ptype', dlocal_lang.type_param, langargs=True)
     dlocal_parser.add_command('*', dlocal_lang.multyply, langargs=True)
     dlocal_parser.add_command('/', dlocal_lang.divission, langargs=True)
@@ -1002,7 +1041,7 @@ if __name__=="__main__":
 """
 //= Start;
 :log.new(STARTING...);
-nxt=10; pls=12; 
+nxt=10; pls=12;
 :param-test=?;
 :param-f=10;
 out.str=test; out.next;
@@ -1070,4 +1109,10 @@ out.str=//form TEST; :const-TEST2=10; @updata;
 };
 jz=if_zero;
 jnz=if_not_zero; 
+@start;
+:pyl-new-{
+e = 2+1
+print(e)
+}; pylpaste = new;
+bash= echo //s zxy;
 """)
