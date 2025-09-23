@@ -13,7 +13,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/plain",
     install_requires=[
-        'numpy>=1.21.0',
+        'numpy>=1.21.0', 'requests'
     ],
     entry_points={
         'console_scripts': [
