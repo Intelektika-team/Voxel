@@ -171,6 +171,7 @@ def __main__():
                     # Создание основного файла
                     code = """//= Hello user! That's the basic structure of voxel program. We recommended to write code like that.;
 @start; //= !WARNING! - @start should be outside of functions;
+@include= base; //= Include base lib outside of function;
 
 :voxel-setup-{
     @include= tape /:
@@ -180,10 +181,9 @@ def __main__():
 };
 :voxel-program-{
     pyl= main("User") /:
+    out.str= "Hello, World!" /:
     //= Your program-voxel here /:
 };
-
-
 //= Start;
 :voxel-main-{
     use= setup /:
@@ -192,6 +192,7 @@ def __main__():
 };
 use= main;
 :exit; //= End;
+
 """
 
                     with open('main.vox', 'w') as file:

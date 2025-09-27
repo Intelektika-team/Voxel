@@ -1,6 +1,7 @@
 from voxel.interface import *
 
-ver_str = "v0.7.5 1st-beta stable"
+ver_str = "v0.7.8 1st-beta prod"
+devmode = False
 
 
 class Errors:
@@ -32,6 +33,18 @@ class Errors:
         print(color.set(f"\nParameter error - {text}", color.YELLOW))
         if exiting: raise SystemError()
 
+    def ParseERROR(text :str, exiting :bool=True, fullexit :bool=False):
+        print(color.set(f"\nParser error - {text}", color.YELLOW))
+        if exiting: raise SystemError()
+        if fullexit: exit(100)
+    
+    def DevERROR(text :str, exiting :bool=True, fullexit :bool=False):
+        print(color.set(f"\nDeveloper error - {text}", color.YELLOW))
+        if exiting: raise SystemError()
+        if fullexit: exit(100)
+    
+    def ErrorERROR(text :str, exiting :bool=True):raise SystemError()
+
 def handle_error(exiting=True):
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -46,6 +59,25 @@ def handle_error(exiting=True):
 def spacedelete(code):
     return code.replace(' ', '')
 
+
+class Develop:
+    def DevlogFUNCTION(text :str, colors :list = [color.BLUE]):
+        if devmode: print(f'{"".join(colors)}===--- DEVELOP: {text}{color.RESET}')
+    
+    def DevfunctionPARSE(com:str):
+        Develop.DevlogFUNCTION(com)
+        if com == '?':
+            print(f'DEVMODE: {devmode}')
+        elif com == 'f':
+            devmode = False
+            print(f'DEVMODE: {devmode}')
+        elif com == 't':
+            devmode = True
+            print(f'DEVMODE: {devmode}')
+        else:
+            Errors.DevERROR(f'UNKNOWN DEV COMMAND: {com}')
+
+
 constants = {}
 points = {}
 params = {}
@@ -53,12 +85,70 @@ pythonlines = {}
 logs = []
 logcount = 0
 
+
+def none(*args, **kwargs):
+    pass
+
+
 class VoxelParser:
     def __init__(self):
-        self.commands={}
+        self.commands={'NONE':{'f':none, 'a':'', 'la':True, 'br':True}}
     
-    def add_command(self, command :str, function :object, args :list=None, langargs :bool=False):
-        self.commands[command] = {'f':function, 'a':args, 'la':langargs}
+    def add_command(self, command :str, function :object, args :list=None, langargs :bool=False, bracketsavailable :bool=False):
+        self.commands[command] = {'f':function, 'a':args, 'la':langargs, 'br':bracketsavailable}
+    
+    def printallcommands(self):
+        now = 0
+        for i in self.commands:
+            now+=1
+            f:object = self.commands[i]["f"]
+            print(f'Command {now}: {i}, func: {f}')
+    
+    def parser(self, i :str, code, raw :str=None, index :int=0):
+        if i.strip() != '': 
+            try:
+                command = i.split('=', 1)[0] # Parse command
+                args = str(i.split('=', 1)[1]).replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"') # Parse arguments
+            except:
+                error = 'NONE'
+                try:
+                    if i.endswith(')'):pass
+                    else:Errors.ErrorERROR()
+                    spl = i.split('(', 1)
+                    Develop.DevlogFUNCTION(spl, [color.RED])
+                    ncommand = spl[0] # Parse command
+                    if raw is None:
+                        nargs = str(spl[0:-1]).replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"').replace("//(", ')') # Parse arguments
+                    else: # Block in development
+                        nargs = str(spl[1][0:-1]).replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"').replace("//(", ')') # Parse arguments
+                        Develop.DevlogFUNCTION(f'{index}: {code[index]}', [color.GREEN])
+                    Develop.DevlogFUNCTION(ncommand, nargs)
+                    if ncommand in self.commands:
+                        cinfo = self.commands[ncommand]
+                        Develop.DevlogFUNCTION(cinfo, [color.GREEN])
+                        if cinfo['br']:
+                            args = nargs
+                            command = ncommand
+                        else: 
+                            textoferror = 'Error in arguments finder. Command is not support "()"'
+                            Errors.ErrorERROR()
+                            error = textoferror
+                    else:
+                        Errors.ErrorERROR()
+
+                except: 
+                    if error == 'NONE': pass
+                    else: Errors.ParseERROR(error)
+                    Develop.DevlogFUNCTION('NONEPARSE')
+                    command = i
+                    args = ''
+        else:
+            command = 'NONE'
+            args = ''
+        try: db = self.commands[command]
+        except: db = 'NONE'
+        Develop.DevlogFUNCTION(f'Parse log- \nline: {i}, \nargs & command: {args, command}\n debug: {db}')
+        return command, args
     
     def parse(self, code :str, sep :str=';'):
         rawcode = code.split(sep)
@@ -71,12 +161,9 @@ class VoxelParser:
             now += 1
             worked = False
             try:
-                try:
-                    command = i.split('=', 1)[0] # Parse command
-                    args = i.split('=', 1)[1] # Parse arguments
-                except:
-                    command = i
-                    args = ''
+                command, args = self.parser(i, code, rawcode, now)
+            
+
                 if command.startswith(':voxel'): # Parse voxels
                     try:
                         splitted = i.split('-', 2) # Split input
@@ -103,6 +190,10 @@ class VoxelParser:
                     
                     worked = True
                 
+                elif command.startswith('NONE'): 
+                    worked = True
+                    pass
+                
                 elif command.startswith(':const'): # Parse constants
                     try:
                         splitted = i.split('-', 1)
@@ -126,9 +217,9 @@ class VoxelParser:
                         body = splitted[2].replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"').replace('/:', '\n').replace('}', '').replace('{', '')
                         name = splitted[1]
                         pythonlines[name] = body
+                        Develop.DevlogFUNCTION(body, pythonlines)
                     except Exception as e:
-                        raise SystemError(f"Error in 'math' parser: {e}")
-                    constants[name] = data
+                        raise SystemError(f"Error in 'pyl' parser: {e}")
                     worked = True
                 
                 elif command.startswith(':log.new'):  # Parse log.new
@@ -176,7 +267,7 @@ class VoxelParser:
                 else:
                     Errors.SystemERROR("PARSE ERROR.")
             except Exception as e:
-                Errors.ErrorHANDLER(f"Error in line {now} - {e}")
+                Errors.ErrorHANDLER(f"Error in line {now} ({i}) - {e}")
 
 
 
@@ -192,9 +283,9 @@ class VoxelLang:
         self.pos = 0  # Start position in centre of tape
         self.code = []
         self.variables = {}
-        self.libs = {"tape":{"lib":f"""tape, pos = {self.tape}, {self.pos}
-
-
+        self.libs = {"tape":{"lib":f"""tape= {self.tape}""", "used":False},
+"base":{"lib":
+"""
 @handle_error()
 def getpos():
     return pos
@@ -223,21 +314,9 @@ def data():
 @handle_error()
 def set(arg):
     tape[pos] = arg
-""", "used":False},"base":{"lib":
-"""
+
 def wait(delay:int):
     time.sleep(delay*0.001)
-
-def handle_error(exiting=True):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                Errors.ErrorHANDLER(str(e), False)
-                if exiting: exit()
-        return wrapper
-    return decorator
 
 def cls():
     if platform.system() == 'Windows':
@@ -359,6 +438,16 @@ def main(user :str='Guest'):
         self.code.append(
 """
 import os, platform, time
+def handle_error(exiting=True):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                raise SystemError(str(e))
+                if exiting: exit()
+        return wrapper
+    return decorator
 """)
 
     @handle_error()
@@ -743,6 +832,66 @@ tape[{pos}] = _current
     @handle_error()
     def printcode(self):
         print("\n".join(self.code))
+
+    
+    @handle_error()
+    def tapeload(self, arg_str :str=''):
+        try:
+            import _voxel_._system_.tape as t
+            self.tape = t.tape
+        except:
+            try:
+                import _system_.tape as t
+                self.tape = t.tape
+            except Exception as e: print(f"EXCEPT: {e}")
+        self.code.append('''
+try: 
+    import _system_.tape as t 
+    tape = t.tape 
+except: print("EXCEPT")
+''')
+    
+    @handle_error()
+    def tapesave(self, arg_str :str=''):
+        with open('_voxel_/_system_/tape.py', 'w') as tape:
+            tape.write(f'tape = {self.tape}')
+        self.code.append("""try: 
+    with open('_system_/tape.py', 'w') as tp: 
+        tp.write(f'tape = {tape}')
+except: 
+    with open('_voxel_/_system_/tape.py', 'w') as tp: 
+        tp.write(f'tape = {tape}')""")
+    
+    @handle_error()
+    def tapeinclude(self, arg_str :str=''):
+        try:
+            import _voxel_._system_.tape as t
+            t.tape = self.tape
+        except:
+            try:
+                import _system_.tape as t
+                t.tape = self.tape
+            except Exception as e: print(f"EXCEPT: {e}")
+        self.code.append("""try:
+    with open('_system_/tape.py', 'r') as tp:
+        tape = tp.read()
+except:print("EXCEPT")""")
+    
+    @handle_error()
+    def tapereset(self, arg_str :str=''):
+        self.retape(100001)
+        self.code.append(f"""try:
+    with open('_system_/tape.py', 'w') as tp:
+        tape = tp.write('{self.tape}')
+except:print("EXCEPT")""")
+    
+    @handle_error()
+    def delay(self, arg_str :str=''):
+        try:
+            delay = int(arg_str) * 0.001
+            self.code.append(f'time.sleep({delay})')
+        except Exception as e:
+            Errors.SyntaxERROR(f"Error in 'delay' with args [{arg_str}]: {e}")
     
     @handle_error()
     def build(self, path: str = 'cache.py'):
@@ -782,190 +931,20 @@ tape[{pos}] = _current
         # Generate and write code to build file
         code = "\n".join(self.getcode())
         logsr = '\n'.join(logs)
-        result = "\n".join([f"'''\n=== LOGS ===\n{logsr}\n=== LOGS ===\n'''", '# MARK: Constants', f'AUTHOR = "{author}"; VERSION = "{version}"; LANGUAGE = "{verlang}"; PATH = "{projpath}"', f"DESCRIPTION = '''{description}'''", '# MARK: Code', code])
+        result = "\n".join([f"'''\n=== LOGS ===\n{logsr}\n=== LOGS ===\n'''", '# MARK: Constants', f'AUTHOR = "{author}"; VERSION = "{version}"; LANGUAGE = "{verlang}"; PATH = "{projpath}"; pos = {self.pos}', f"DESCRIPTION = '''{description}'''", '# MARK: Code', code])
         
         with open(full_file_path, 'w') as f:
             f.write(result)
         
         print(f'Done. File saved to: {full_file_path}')
     
-    
-    
-local_lang = VoxelLang(100001)
-local_parser = VoxelParser()
-    
-# Регистрируем команды
-local_parser.add_command('nxt', local_lang.next, langargs=True)
-local_parser.add_command('prv', local_lang.prev, langargs=True)
-local_parser.add_command('swp', local_lang.swap, langargs=True)
-local_parser.add_command('pls', local_lang.plus, langargs=True)
-local_parser.add_command('mns', local_lang.minus, langargs=True)
-local_parser.add_command('set', local_lang.set, langargs=True)
-local_parser.add_command('ers', local_lang.erase, langargs=True)
-local_parser.add_command('mov', local_lang.copy, langargs=True)
-local_parser.add_command('pyl', local_lang.python_line, langargs=True)
-local_parser.add_command('jmp', local_lang.tp, langargs=True)
-local_parser.add_command('mlt', local_lang.multyply, langargs=True)
-local_parser.add_command('dvs', local_lang.divission, langargs=True)
-local_parser.add_command('ppl', local_lang.plus_param, langargs=True)
-local_parser.add_command('pmn', local_lang.minus_param, langargs=True)
-local_parser.add_command('pst', local_lang.set_param, langargs=True)
-local_parser.add_command('pdv', local_lang.divission_param, langargs=True)
-local_parser.add_command('pmp', local_lang.minus_param, langargs=True)
-local_parser.add_command('ptp', local_lang.topython_param, langargs=True)
-local_parser.add_command('bash', local_lang.bash, langargs=True)
-local_parser.add_command('pylpaste', local_lang.code_append, langargs=True)
-local_parser.add_command('plps', local_lang.code_append, langargs=True)
-local_parser.add_command('>', local_lang.next, langargs=True)
-local_parser.add_command('<', local_lang.prev, langargs=True)
-local_parser.add_command('+', local_lang.plus, langargs=True)
-local_parser.add_command('-', local_lang.minus, langargs=True)
-local_parser.add_command('?', local_lang.where, langargs=True)
-local_parser.add_command('!', local_lang.ndata, langargs=True)
-local_parser.add_command('>/', local_lang.copy, langargs=True)
-local_parser.add_command('*', local_lang.multyply, langargs=True)
-local_parser.add_command('/', local_lang.divission, langargs=True)
-local_parser.add_command('<>', local_lang.swap, langargs=True)
-local_parser.add_command('!0', local_lang.erase, langargs=True)
-local_parser.add_command('out.char', local_lang.output_char, langargs=True)
-local_parser.add_command('out.now', local_lang.output_now, langargs=True)
-local_parser.add_command('out.str', local_lang.print, langargs=True)
-local_parser.add_command('out.next', local_lang.output_next, langargs=True)
-local_parser.add_command('out.ptype', local_lang.type_param, langargs=True)
-local_parser.add_command('in.char', local_lang.input_char, langargs=True)
-local_parser.add_command('in.num', local_lang.input_num, langargs=True)
-local_parser.add_command('in.str', local_lang.input_str, langargs=True)
-local_parser.add_command('', local_lang.comentary, langargs=True)
-local_parser.add_command('//', local_lang.comentary, langargs=True)
-local_parser.add_command('@include', local_lang.include, langargs=True)
-local_parser.add_command('@import', local_lang.import_func, langargs=True)
-local_parser.add_command('@retape', local_lang.retape, langargs=True)
-local_parser.add_command('@updata', local_lang.data, args='update') #for update data
 
-def use(arg_str: str=""):
-    if arg_str in points:
-        local_parser.parse(points[arg_str].replace('{', '').replace('}', ''), sep='/:')
-    else:
-        Errors.NotFoundERROR(f"Voxel {arg_str} is not found.")
-local_parser.add_command('use', use, langargs=True)
-
-@handle_error()
-def jz(arg_str: str=""):
-    if local_lang.tape[local_lang.pos] == 0:
-        use(arg_str)
-
-@handle_error()
-def jnz(arg_str: str=""):
-    if local_lang.tape[local_lang.pos] != 0:
-        use(arg_str)
-local_parser.add_command('jnz', jnz, langargs=True)
-local_parser.add_command('jz', jz, langargs=True)
-
-@handle_error()
-def jo(arg_str: str=""):
-    if local_lang.tape[local_lang.pos] == 1:
-        use(arg_str)
-
-@handle_error()
-def jno(arg_str: str=""):
-    if local_lang.tape[local_lang.pos] != 1:
-        use(arg_str)
-@handle_error()
-def jf(arg_str :str=""):
-    inp = arg_str.split(',')
-    if local_lang.tape[local_lang.pos] == local_lang.data(inp[0]):
-        use(inp[1])
-
-@handle_error()
-def jnf(arg_str: str = ""):
-    inp = arg_str.split(',')
-    if local_lang.tape[local_lang.pos] != local_lang.data(inp[0]):
-        use(inp[1])
-local_parser.add_command('jno', jno, langargs=True)
-local_parser.add_command('jo', jo, langargs=True)
-local_parser.add_command('jnf', jnf, langargs=True)
-local_parser.add_command('jf', jf, langargs=True)
-def fori(arg_str :str=""):
-    inp = arg_str.split(',')
-    u = int(local_lang.data(inp[0]))
-    f = inp[1]
-    for i in range(u):
-        use(f)
-def drelog(arg_str :str=""):
-    global logs
-    logs = []
-    
-    local_lang.reset()
-local_parser.add_command('@relog', drelog)
-local_parser.add_command('for', fori, langargs=True)
-def start(arg_str :str=""):
-    global params
-    global points
-    global constants
-    points = {}
-    constants = {}
-    params = {}
-    local_lang.reset()
-local_parser.add_command('@start', start, langargs=True)
-
-
-@handle_error()
-def builder(text: str, path: str = 'build.py'):
-    dlocal_lang = VoxelLang(100001)
-    dlocal_parser = VoxelParser()
-    
+def init(dlocal_lang :VoxelLang, d2local_parser :VoxelParser):
     # Регистрируем команды
-    dlocal_parser.add_command('nxt', dlocal_lang.next, langargs=True)
-    dlocal_parser.add_command('prv', dlocal_lang.prev, langargs=True)
-    dlocal_parser.add_command('>', dlocal_lang.next)
-    dlocal_parser.add_command('<', dlocal_lang.prev)
-    dlocal_parser.add_command('pls', dlocal_lang.plus, langargs=True)
-    dlocal_parser.add_command('mns', dlocal_lang.minus, langargs=True)
-    dlocal_parser.add_command('+', dlocal_lang.plus, langargs=True)
-    dlocal_parser.add_command('-', dlocal_lang.minus, langargs=True)
-    dlocal_parser.add_command('set', dlocal_lang.set, langargs=True)
-    dlocal_parser.add_command('ers', dlocal_lang.erase, langargs=True)
-    dlocal_parser.add_command('!0', dlocal_lang.erase, langargs=True)
-    dlocal_parser.add_command('out.char', dlocal_lang.output_char, langargs=True)
-    dlocal_parser.add_command('out.now', dlocal_lang.output_now, langargs=True)
-    dlocal_parser.add_command('out.str', dlocal_lang.print, langargs=True)
-    dlocal_parser.add_command('out.next', dlocal_lang.output_next, langargs=True)
-    dlocal_parser.add_command('in.char', dlocal_lang.input_char, langargs=True)
-    dlocal_parser.add_command('in.num', dlocal_lang.input_num, langargs=True)
-    dlocal_parser.add_command('in.str', dlocal_lang.input_str, langargs=True)
-    dlocal_parser.add_command('', dlocal_lang.comentary, langargs=True)
-    dlocal_parser.add_command('//', dlocal_lang.comentary, langargs=True)
-    dlocal_parser.add_command('?', dlocal_lang.where, langargs=True)
-    dlocal_parser.add_command('!', dlocal_lang.ndata, langargs=True)
-    dlocal_parser.add_command('>/', dlocal_lang.copy, langargs=True)
-    dlocal_parser.add_command('mov', dlocal_lang.copy, langargs=True)
-    dlocal_parser.add_command('pyl', dlocal_lang.python_line, langargs=True)
-    dlocal_parser.add_command('jmp', dlocal_lang.tp, langargs=True)
-    dlocal_parser.add_command('mlt', dlocal_lang.multyply, langargs=True)
-    dlocal_parser.add_command('dvs', dlocal_lang.divission, langargs=True)
-    dlocal_parser.add_command('ppl', dlocal_lang.plus_param, langargs=True)
-    dlocal_parser.add_command('pmn', dlocal_lang.minus_param, langargs=True)
-    dlocal_parser.add_command('pst', dlocal_lang.set_param, langargs=True)
-    dlocal_parser.add_command('pdv', dlocal_lang.divission_param, langargs=True)
-    dlocal_parser.add_command('pmp', dlocal_lang.minus_param, langargs=True)
-    dlocal_parser.add_command('ptp', dlocal_lang.topython_param, langargs=True)
-    dlocal_parser.add_command('bash', dlocal_lang.bash, langargs=True)
-    dlocal_parser.add_command('pylpaste', dlocal_lang.code_append, langargs=True)
-    dlocal_parser.add_command('plps', dlocal_lang.code_append, langargs=True)
-    dlocal_parser.add_command('out.ptype', dlocal_lang.type_param, langargs=True)
-    dlocal_parser.add_command('*', dlocal_lang.multyply, langargs=True)
-    dlocal_parser.add_command('/', dlocal_lang.divission, langargs=True)
-    dlocal_parser.add_command('<>', dlocal_lang.swap, langargs=True)
-    dlocal_parser.add_command('swp', dlocal_lang.swap, langargs=True)
-    dlocal_parser.add_command('@include', dlocal_lang.include, langargs=True)
-    dlocal_parser.add_command('@import', dlocal_lang.import_func, langargs=True)
-    dlocal_parser.add_command('@retape', dlocal_lang.retape, langargs=True)
-    dlocal_parser.add_command('@updata', dlocal_lang.data, args='update') #for update data
     def drelog(arg_str :str=""):
         global logs
         logs = []
-    dlocal_parser.add_command('@relog', drelog)
-
+    
     def dstart(arg_str :str=""):
         global params
         global points
@@ -973,28 +952,13 @@ def builder(text: str, path: str = 'build.py'):
         points = {}
         params = {}
         constants = {}
-        
         dlocal_lang.reset()
-    dlocal_parser.add_command('@start', dstart, langargs=True)
-
+    
     def duse(arg_str: str=""):
         if arg_str in points:
-            dlocal_parser.parse(points[arg_str].replace('{', '').replace('}', ''), sep='/:')
+            d2local_parser.parse(points[arg_str].replace('{', '').replace('}', ''), sep='/:')
         else:
             Errors.NotFoundERROR(f"Voxel '{arg_str}' is not found.")
-    dlocal_parser.add_command('use', duse, langargs=True)
-    
-    @handle_error()
-    def djz(arg_str: str=""):
-        if dlocal_lang.tape[dlocal_lang.pos] == 0:
-            duse(arg_str)
-    
-    @handle_error()
-    def djnz(arg_str: str=""):
-        if dlocal_lang.tape[dlocal_lang.pos] != 0:
-            duse(arg_str)
-    dlocal_parser.add_command('jnz', djnz, langargs=True)
-    dlocal_parser.add_command('jz', djz, langargs=True)
 
     @handle_error()
     def djo(arg_str: str=""):
@@ -1017,10 +981,6 @@ def builder(text: str, path: str = 'build.py'):
         inp = arg_str.split(',')
         if dlocal_lang.tape[dlocal_lang.pos] != dlocal_lang.data(inp[0]):
             duse(inp[1])
-    dlocal_parser.add_command('jno', djno, langargs=True)
-    dlocal_parser.add_command('jo', djo, langargs=True)
-    dlocal_parser.add_command('jnf', djnf, langargs=True)
-    dlocal_parser.add_command('jf', djf, langargs=True)
 
     def dfori(arg_str :str=""):
         inp = arg_str.split(',')
@@ -1028,8 +988,101 @@ def builder(text: str, path: str = 'build.py'):
         f = inp[1]
         for i in range(u):
             duse(f)
-    dlocal_parser.add_command('for', dfori, langargs=True)
     
+    @handle_error()
+    def djz(arg_str: str=""):
+        if dlocal_lang.tape[dlocal_lang.pos] == 0:
+            duse(arg_str)
+    
+    @handle_error()
+    def djnz(arg_str: str=""):
+        if dlocal_lang.tape[dlocal_lang.pos] != 0:
+            duse(arg_str)
+    
+    # Base comands
+    d2local_parser.add_command('nxt', dlocal_lang.next, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('prv', dlocal_lang.prev, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('pls', dlocal_lang.plus, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('mns', dlocal_lang.minus, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('set', dlocal_lang.set, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('ers', dlocal_lang.erase, langargs=True, bracketsavailable=True)
+    # Io
+    d2local_parser.add_command('out.char', dlocal_lang.output_char, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('out.now', dlocal_lang.output_now, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('out.str', dlocal_lang.print, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('out.next', dlocal_lang.output_next, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('out.ptype', dlocal_lang.type_param, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('in.char', dlocal_lang.input_char, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('in.num', dlocal_lang.input_num, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('in.str', dlocal_lang.input_str, langargs=True, bracketsavailable=True)
+    # Commands
+    d2local_parser.add_command('mov', dlocal_lang.copy, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('pyl', dlocal_lang.python_line, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('jmp', dlocal_lang.tp, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('mlt', dlocal_lang.multyply, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('dvs', dlocal_lang.divission, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('ppl', dlocal_lang.plus_param, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('pmn', dlocal_lang.minus_param, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('pst', dlocal_lang.set_param, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('pdv', dlocal_lang.divission_param, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('pmp', dlocal_lang.minus_param, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('ptp', dlocal_lang.topython_param, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('bash', dlocal_lang.bash, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('delay', dlocal_lang.delay, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('pylpaste', dlocal_lang.code_append, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('plps', dlocal_lang.code_append, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('use', duse, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('jnz', djnz, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('jz', djz, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('jno', djno, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('jo', djo, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('jnf', djnf, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('jf', djf, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('for', dfori, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('swp', dlocal_lang.swap, langargs=True, bracketsavailable=True)
+    # Aliases & symbols
+    d2local_parser.add_command('', dlocal_lang.comentary, langargs=True)
+    d2local_parser.add_command('@', dlocal_lang.delay, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('//', dlocal_lang.comentary, langargs=True)
+    d2local_parser.add_command('?', dlocal_lang.where, args='')
+    d2local_parser.add_command('!', dlocal_lang.ndata, args='')
+    d2local_parser.add_command('>/', dlocal_lang.copy, langargs=True)
+    d2local_parser.add_command('*', dlocal_lang.multyply, langargs=True)
+    d2local_parser.add_command('/', dlocal_lang.divission, langargs=True)
+    d2local_parser.add_command('<>', dlocal_lang.swap, langargs=True)
+    d2local_parser.add_command('!0', dlocal_lang.erase, args='')
+    d2local_parser.add_command('+', dlocal_lang.plus, langargs=True)
+    d2local_parser.add_command('-', dlocal_lang.minus, langargs=True)
+    d2local_parser.add_command('>', dlocal_lang.next, langargs=True)
+    d2local_parser.add_command('<', dlocal_lang.prev, langargs=True)
+    # System commands
+    d2local_parser.add_command('@include', dlocal_lang.include, langargs=True)
+    d2local_parser.add_command('@import', dlocal_lang.import_func, langargs=True)
+    d2local_parser.add_command('@retape', dlocal_lang.retape, langargs=True)
+    d2local_parser.add_command('@updata', dlocal_lang.data, args='update') #for update data
+    d2local_parser.add_command('@relog', drelog, langargs=True)
+    d2local_parser.add_command('@start', dstart, args='')
+    # Tapefile
+    d2local_parser.add_command('@tload', dlocal_lang.tapeload, args='') # ALPHA VERSION
+    d2local_parser.add_command('@tsave', dlocal_lang.tapesave, args='') # ALPHA VERSION
+    d2local_parser.add_command('@tinclude', dlocal_lang.tapeinclude, args='') # ALPHA VERSION
+    d2local_parser.add_command('@treset', dlocal_lang.tapereset, args='') # ALPHA VERSION
+    # Developer commands
+    d2local_parser.add_command('!dev', Develop.DevfunctionPARSE, langargs=True, bracketsavailable=True) # ALPHA VERSION
+    return dlocal_lang, d2local_parser
+
+    
+local_lang = VoxelLang(100001)
+local_parser = VoxelParser()
+local_lang, local_parser = init(local_lang, local_parser)
+
+
+@handle_error()
+def builder(text: str, path: str = 'build.py'):
+    dlocal_lang = VoxelLang(100001)
+    dlocal_parser = VoxelParser()
+    
+    dlocal_lang, dlocal_parser = init(dlocal_lang, dlocal_parser)
 
     dlocal_parser.parse(text)
     dlocal_lang.build(path)
@@ -1103,10 +1156,11 @@ out.str=//form TEST; :const-TEST2=10; @updata;
 :voxel-if_zero-{
     out.str="Zero!" /:+
 };
-
+!dev(t);
 :voxel-if_not_zero-{
     out.str="Not zero!" /:-
 };
+
 jz=if_zero;
 jnz=if_not_zero; 
 @start;
@@ -1114,5 +1168,74 @@ jnz=if_not_zero;
 e = 2+1
 print(e)
 }; pylpaste = new;
-bash= echo //s zxy;
+bash(echo //s zxy);
+delay=1000;
+!0; out.str(TEST TEXT);
 """)
+    local_parser.printallcommands()
+    """
+Command 1: NONE
+Command 2: nxt
+Command 3: prv
+Command 4: pls
+Command 5: mns
+Command 6: set
+Command 7: ers
+Command 8: out.char
+Command 9: out.now
+Command 10: out.str
+Command 11: out.next
+Command 12: out.ptype
+Command 13: in.char
+Command 14: in.num
+Command 15: in.str
+Command 16: mov
+Command 17: pyl
+Command 18: jmp
+Command 19: mlt
+Command 20: dvs
+Command 21: ppl
+Command 22: pmn
+Command 23: pst
+Command 24: pdv
+Command 25: pmp
+Command 26: ptp
+Command 27: bash
+Command 28: delay
+Command 29: pylpaste
+Command 30: plps
+Command 31: use
+Command 32: jnz
+Command 33: jz
+Command 34: jno
+Command 35: jo
+Command 36: jnf
+Command 37: jf
+Command 38: for
+Command 39: swp
+Command 40: 
+Command 41: @
+Command 42: //
+Command 43: ?
+Command 44: !
+Command 45: >/
+Command 46: *
+Command 47: /
+Command 48: <>
+Command 49: !0
+Command 50: +
+Command 51: -
+Command 52: >
+Command 53: <
+Command 54: @include
+Command 55: @import
+Command 56: @retape
+Command 57: @updata
+Command 58: @relog
+Command 59: @start
+Command 60: @tload
+Command 61: @tsave
+Command 62: @tinclude
+Command 63: @treset
+Command 64: !dev, func: <function Develop.DevfunctionPARSE at 0x110e79a20>
+"""

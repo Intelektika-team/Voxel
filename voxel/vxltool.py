@@ -6,6 +6,8 @@ from voxel.interface import color
 import requests
 import base64
 from urllib.parse import urlparse
+import hashlib
+
 
 def download_github_file(repo_url, file_path, token=None):
     # Извлекаем владельца и название репозитория из URL
@@ -64,17 +66,25 @@ def new(name):
     os.chdir(dir_path)
 
     code = """//= Hello user! That's the basic structure of voxel program. We recommended to write code like that.;
+@treset; //= Reset tape;
 @start; //= !WARNING! - @start should be outside of functions;
+@include= base; //= Include base lib outside of function;
+
 :voxel-setup-{
-    @include= tape /:
+    @tload /:
     @include= first_program /:
     @updata /:
     //= Your setup-voxel here /:
 };
 :voxel-program-{
     pyl= main("User") /:
+    out.str= "Hello, World!" /:
     //= Your program-voxel here /:
 };
+:pyl-new-{
+e = 2+1
+print(e)
+}; pylpaste = new;
 //= Start;
 :voxel-main-{
     use= setup /:
@@ -82,6 +92,7 @@ def new(name):
     //= Your main-voxel here /:
 };
 use= main;
+@tsave;
 :exit; //= End;
 """
     with open('main.vox', 'w', encoding='utf-8') as file:
@@ -113,7 +124,17 @@ use= main;
             print(color.set("Dependencies file 'test.py' created successfully.", color.YELLOW))
     else:
         print(color.set('Project dependencies folder already exists', color.YELLOW))
-
+    sys_path = os.path.join(dir_path, "_voxel_", "_system_")
+    if not os.path.exists(sys_path):
+        os.makedirs(sys_path)
+        print(color.set(f"Directory '{sys_path}' created successfully.", color.YELLOW))
+        l = lang.VoxelLang(100001)
+        code_tape = f"""
+tape = {l.tape}
+"""
+        with open(os.path.join(sys_path, 'tape.py'), 'w', encoding='utf-8') as file:
+            file.write(code_tape)
+            print(color.set("System file 'tape.py' created successfully.", color.YELLOW))
     os.chdir(current)
     print(color.set("Project created =====", color.GREEN))
 
@@ -128,7 +149,7 @@ def build(command, name='', to=''):
                 file = f.read()
             print(color.set('Open success... \n Build...', color.YELLOW))
             lang.builder(file, to)
-            print(color.set('\nBuild success...', color.GREEN))
+            print(color.set('Build success...', color.GREEN))
         except FileNotFoundError:
             print(lang.Errors.SystemERROR('File not found.', False))
         except Exception as e:
@@ -142,13 +163,158 @@ def build(command, name='', to=''):
                 file = f.read()
             print(color.set('Open success... \n Build...', color.YELLOW))
             lang.builder(file, "build.py")
-            print(color.set('\nBuild success...', color.GREEN))
+            print(color.set('Build success...', color.GREEN))
         except FileNotFoundError:
             print(lang.Errors.SystemERROR('File not found.', False))
         except Exception as e:
             print(lang.Errors.SystemERROR(f'Build error: {e}', False))
     else:
         print("Unknown build command.")
+
+
+
+def optimize(build_file):
+    """
+    Оптимизирует собранный Python файл из папки _voxel_
+    Удаляет комментарии, лишние пробелы, оптимизирует код
+    """
+    # Проверяем что мы в проекте Voxel
+    if not os.path.exists('init.voxel'):
+        raise SystemError('Error: You must be in a voxel project directory. File init.voxel not found.')
+    
+    voxel_dir = '_voxel_'
+    build_path = os.path.join(voxel_dir, build_file)
+    
+    if not os.path.exists(build_path):
+        print(color.set(f"Build file {build_path} not found.", color.RED))
+        return
+    
+    try:
+        print(color.set(f'Optimizing {build_file}...', color.YELLOW))
+        
+        with open(build_path, 'r', encoding='utf-8') as f:
+            code = f.read()
+        
+        # Оптимизации
+        optimized_code = _optimize_python_code(code)
+        
+        # Создаем новое имя файла с префиксом release
+        name, ext = os.path.splitext(build_file)
+        release_file = f"{name}_release{ext}"
+        release_path = os.path.join(voxel_dir, release_file)
+        
+        with open(release_path, 'w', encoding='utf-8') as f:
+            f.write(optimized_code)
+        
+        print(color.set(f"Optimized code saved to {release_path}", color.GREEN))
+        print(color.set(f"Original size: {len(code)} bytes", color.CYAN))
+        print(color.set(f"Optimized size: {len(optimized_code)} bytes", color.CYAN))
+        print(color.set(f"Reduction: {((len(code) - len(optimized_code)) / len(code) * 100):.1f}%", color.CYAN))
+        
+    except Exception as e:
+        print(color.set(f'Optimization failed: {e}', color.RED))
+
+def _optimize_python_code(code):
+    """
+    Внутренняя функция для оптимизации Python кода
+    """
+    lines = code.split('\n')
+    optimized_lines = []
+    in_multiline_comment = False
+    in_multiline_string = False
+    string_delimiter = None
+    
+    for line in lines:
+        original_line = line
+        line = line.rstrip()  # Удаляем пробелы справа
+        
+        # Пропускаем полностью пустые строки
+        if not line:
+            continue
+        
+        # Обработка многострочных комментариев и строк
+        if in_multiline_comment:
+            if '"""' in line or "'''" in line:
+                in_multiline_comment = False
+            continue
+        elif in_multiline_string:
+            optimized_lines.append(original_line)
+            if string_delimiter in line:
+                # Проверяем, что это конец строки, а не встроенный делимитер
+                if line.count(string_delimiter) % 2 != 0:
+                    in_multiline_string = False
+            continue
+        
+        # Проверяем на многострочные строки
+        if ('"""' in line or "'''" in line) and not line.strip().startswith('#'):
+            # Подсчитываем кавычки чтобы определить начало/конец
+            triple_double = line.count('"""')
+            triple_single = line.count("'''")
+            if triple_double % 2 != 0 or triple_single % 2 != 0:
+                in_multiline_string = True
+                string_delimiter = '"""' if triple_double % 2 != 0 else "'''"
+            optimized_lines.append(original_line)
+            continue
+        
+        # Удаляем однострочные комментарии
+        if line.strip().startswith('#'):
+            # Пропускаем специальные комментарии (маркеры)
+            if any(marker in line for marker in ['MARK:', 'TODO:', 'FIXME:', 'NOTE:']):
+                optimized_lines.append(original_line)
+            continue
+        
+        # Удаляем комментарии в конце строки
+        if '#' in line:
+            # Разделяем код и комментарий, избегая решеток внутри строк
+            parts = []
+            current = ''
+            in_string = False
+            string_char = None
+            escaped = False
+            
+            for char in line:
+                if not in_string and char == '#':
+                    # Нашли комментарий вне строки
+                    if current.strip():  # Если до этого был код
+                        parts.append(current)
+                    current = ''
+                    break
+                elif char in ('"', "'") and not escaped:
+                    if in_string and char == string_char:
+                        in_string = False
+                        string_char = None
+                    elif not in_string:
+                        in_string = True
+                        string_char = char
+                    current += char
+                elif char == '\\' and in_string:
+                    escaped = True
+                    current += char
+                else:
+                    if escaped:
+                        escaped = False
+                    current += char
+            
+            if current.strip():
+                parts.append(current)
+            
+            if parts:
+                line = ' '.join(parts).strip()
+        
+        
+        
+        if line:
+            optimized_lines.append(line)
+    
+    # Удаляем лишние пустые строки в конце
+    while optimized_lines and not optimized_lines[-1]:
+        optimized_lines.pop()
+    
+    return '\n'.join(optimized_lines)
+
+
+
+
 
 def buildnrun(command, name='', to=''):
     if command in ('buildnrun', '-br'):
@@ -162,7 +328,7 @@ def buildnrun(command, name='', to=''):
         if os.path.exists(target_file):
             try:
                 print(color.set(f'\nRunning {target_file}...', color.CYAN))
-                exit_code = os.system(f'python "{target_file}"')
+                exit_code = os.system(f'python3 "{target_file}"')
                 if exit_code != 0:
                     print(color.set(f'Program exited with code: {exit_code}', color.RED))
             except Exception as e:
@@ -177,7 +343,7 @@ def buildnrun(command, name='', to=''):
         if os.path.exists(target_file):
             try:
                 print(color.set(f'\nRunning {target_file}...', color.CYAN))
-                exit_code = os.system(f'python "{target_file}"')
+                exit_code = os.system(f'python3 "{target_file}"')
                 if exit_code != 0:
                     print(color.set(f'Program exited with code: {exit_code}', color.RED))
             except Exception as e:
@@ -185,19 +351,18 @@ def buildnrun(command, name='', to=''):
         else:
             print(lang.Errors.SystemERROR(f'Output file {target_file} not found.', False))
     else:
-        print("Unknown build and run command.")
+        print(f"Unknown build and run command: {command}")
+    
+    print(color.set(f'\nRunning {target_file} done...', color.CYAN))
 
 
 def install(name):
     # Проверяем что мы в проекте Voxel
     if not os.path.exists('init.voxel'):
         raise SystemError('Error: You must be in a voxel project directory. File init.voxel not found.')
-    
-    # Создаем папку _voxel_ если её нет
-    voxel_dir = '_voxel_'
+    voxel_dir = '_voxel_/_dependencies_'
     if not os.path.exists(voxel_dir):
-        os.makedirs(voxel_dir)
-        print(color.set(f"Directory '{voxel_dir}' created successfully.", color.YELLOW))
+        print("You outside of project. Use 'vxl -n <project_name>' to create a project.")
 
     try:
         print('Downloading...')
@@ -218,6 +383,47 @@ def install(name):
     
     print(color.set(f'File {file_path} created successfully.', color.GREEN))
 
+def installfrom(repo, name):
+    # Проверяем что мы в проекте Voxel
+    if not os.path.exists('init.voxel'):
+        raise SystemError('Error: You must be in a voxel project directory. File init.voxel not found.')
+    voxel_dir = '_voxel_/_dependencies_'
+    if not os.path.exists(voxel_dir):
+        print("You outside of project. Use 'vxl -n <project_name>' to create a project.")
+
+    try:
+        repo_url = f'https://github.com/{repo}'
+        print(f'Downloading custom {repo_url}/{name}.py...')
+        file_content = download_github_file(repo_url, f'{name}.py')
+    except Exception as e:
+        print(color.set(f'Download failed: {e}', color.RED))
+        return
+
+    print('Downloading done...')
+    print('Creating file...')
+    
+    # Сохраняем в папку _voxel_
+    file_path = os.path.join(voxel_dir, f'{name.split("/")[-1]}.py')
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(file_content)
+    
+    print(color.set(f'File {file_path} created successfully.', color.GREEN))
+
+
+def clearcache():
+    dir = f'{os.getcwd()}/_voxel_'
+    for i in os.listdir(dir):
+        file_path = os.path.join(dir, i)
+        if i.startswith('_VOXEL_BUILD_CACHE-') and os.path.exists(file_path):
+            os.remove(file_path)
+
+def clearall():
+    dir = f'{os.getcwd()}/_voxel_'
+    for i in os.listdir(dir):
+        file_path = os.path.join(dir, i)
+        if i.endswith('.py') and os.path.exists(file_path):
+            os.remove(file_path)
+
 def show_help():
     print(
 f"""
@@ -225,16 +431,21 @@ f"""
 Version:
     {ver_str}
 Commands:
-    -h                         : Show this help message
-    -n <name>                  : Create a new project with the given name
-    -b <src.vox> <output.py>   : Build source .vox file into output Python file
-    -bs                        : Build standard main.vox into _voxel_/build.py
-    -br <src.vox> <output.py>  : Build and run the built Python file
-    -brs                       : Build and run standard main.vox
-    -v                         : Show VoxelLang version
-    -i <script_name>           : Download lib to _voxel_/_dependencies_
+    -h                             : Show this help message
+    -n <name>                      : Create a new project with the given name
+    -b <src.vox> <output.py>       : Build source .vox file into output Python file
+    -bs                            : Build standard main.vox into _voxel_/build.py
+    -br <src.vox> <output.py>.     : Build and run the built Python file
+    -brs                           : Build and run standard main.vox
+    -o <buildfile.py>              : Optimize build file (remove comments, minify)
+    -v                             : Show VoxelLang version
+    -i <script_name>               : Download lib to _voxel_/_dependencies_
+    -if <user/repo> <script_name>  : Download lib from user/repo/scriptname.py to _voxel_/_dependencies_
+    -cl                            : Clear all .py files in dir '_voxel_'
+    -clc                           : Clear cache files in dir '_voxel_'
 Notes:
     Make sure to use correct file extensions and paths.
+    Use 'optim' command for release preparation.
 """
     )
 
@@ -274,15 +485,41 @@ def main():
     elif command in ('-h', 'help'):
         show_help()
     
+    elif command in ('-cl', 'clear'):
+        clearall()
+    
+    elif command in ('-clc', 'clearcache'):
+        clearcache()
+    
     elif command in ('-i', 'install'):
-        install(args[0])
+        if len(args) == 1:
+            install(args[0])
+        else: print("Incorrect ussage of instal. Use command like '-i <name_of_script>'.")
+
+    elif command in ('-if', 'installfrom'):
+        if len(args) == 1:
+            installfrom('Intelektika-team/vxl', args[0])
+        elif len(args) == 2:
+            installfrom(args[0], args[1])
+        else: print("Incorrect ussage of instalfrom. Use command like '-if <user/repo> <name_of_script>' or just '-if <name_of_script>' for download from official repo.")
 
     elif command in ('-v', 'ver'):
         print(f'VoxelLang version: {ver_str}')
+    
+    elif command in ('-o', 'optim'):
+        if len(args) != 1:
+            print("Incorrect argument format. Correct: 'vxl -o {buildfile.py}'")
+            return
+        optimize(args[0])
 
     else:
-        print(f'Unknown command: {command}')
-        show_help()
+        try:
+            with open(command, 'r') as f:
+                file = hashlib.sha224(f.read().encode()).hexdigest()
+            buildnrun('buildnrun', command, f'_VOXEL_BUILD_CACHE-{file}_.py')
+        except Exception as e:
+            print(f'Unknown command: {command} or file not found: {e}')
+            show_help()
 
 
 
