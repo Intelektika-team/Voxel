@@ -1,7 +1,5 @@
 from setuptools import setup, find_packages
 
-with open("README.txt", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
 
 setup(
     name='voxl',
@@ -10,7 +8,6 @@ setup(
     author='pt',
     author_email='kvantorium73.int@gmail.com',
     packages=find_packages(),
-    long_description=long_description,
     long_description_content_type="text/plain",
     install_requires=[
         'requests'
