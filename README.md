@@ -99,4 +99,4 @@ Contribute your own packages by submitting pull requests to the repository!
 
 Author - pt. 
 
-Intelektika-team - started at 2025 - VoxelLang
+Intelektika-team - started at september 2025 - VoxelLang
