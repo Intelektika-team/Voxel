@@ -1,10 +1,47 @@
+"""
+The core file of voxel language. 
+
+Functions-
+    Errors - The class of voxel errors
+    Develop - The developer functions
+    VoxelParser - The interpriter of voxel language
+    VoxelLanguage - The voxel language VM
+"""
+
 from voxel.interface import *
 
 ver_str = "v0.7.8 1st-beta prod"
 devmode = False
 
 
+
+def handle_error(exiting=True):
+    """
+    Important decorator for tracking errors.
+    """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                Errors.ErrorHANDLER(f"{str(e)} in {func}", False)
+                if exiting: exit()
+        return wrapper
+    return decorator
+
+def spacedelete(code):
+    """
+    Small function for VoxelLange.parse.
+    """
+    return code.replace(' ', '')
+
+
 class Errors:
+    """
+    Class of VOXEL LANG developer functions.
+    
+    Note for developers: The functions in the class have no description because they are simple and everything about them is clear by name.
+    """
     def SyntaxERROR(text :str, exiting :bool=True):
         print(color.red(f"\nSyntax Error - {text}"))
         if exiting: raise SystemError()
@@ -45,26 +82,25 @@ class Errors:
     
     def ErrorERROR(text :str, exiting :bool=True):raise SystemError()
 
-def handle_error(exiting=True):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                Errors.ErrorHANDLER(f"{str(e)} in {func}", False)
-                if exiting: exit()
-        return wrapper
-    return decorator
-
-def spacedelete(code):
-    return code.replace(' ', '')
-
 
 class Develop:
+    """
+    Class of VOXEL LANG developer functions.
+    
+    Note for developers: Discription of the functions in this class only on russian because
+    a lot of developers of language from russia.
+    """
     def DevlogFUNCTION(text :str, colors :list = [color.BLUE]):
+        """
+        Система лога для разработчика.
+        Работает только когда глобальная переменная devmode == True.
+        """
         if devmode: print(f'{"".join(colors)}===--- DEVELOP: {text}{color.RESET}')
     
     def DevfunctionPARSE(com:str):
+        """
+        Небольшой парсер комманд разработчика.
+        """
         Develop.DevlogFUNCTION(com)
         if com == '?':
             print(f'DEVMODE: {devmode}')
@@ -91,13 +127,38 @@ def none(*args, **kwargs):
 
 
 class VoxelParser:
+    """
+    Class of VOXEL LANG interpriter.
+    
+    Note for developers: Discription of functions in this class only on russian because
+    a lot of developers of language from russia.
+    """
     def __init__(self):
+        """
+        Функция для инициализации интерпритатора.
+        """
         self.commands={'NONE':{'f':none, 'a':'', 'la':True, 'br':True}}
     
     def add_command(self, command :str, function :object, args :list=None, langargs :bool=False, bracketsavailable :bool=False):
+        """
+        Функция для добавления комнады. 
+        
+        Принимает - 
+            command - Название команды
+            function - Функция для команды
+            args - Если комманда не принимает аргументы 
+                (langargs, bracketsavailable), то используются эти аргументы
+            langargs - Может ли команда принимать аргуманты вида 'command = args'
+            bracketsavailable - Может ли команда принимать аргуманты вида 'command(args)'
+       
+        Добавляет в массив для интерпритатора комманду и информацию о ней указанную в аргументах.
+        """
         self.commands[command] = {'f':function, 'a':args, 'la':langargs, 'br':bracketsavailable}
     
     def printallcommands(self):
+        """
+        Функция для вывода всех добавленных в язык комманд.
+        """
         now = 0
         for i in self.commands:
             now+=1
@@ -105,6 +166,10 @@ class VoxelParser:
             print(f'Command {now}: {i}, func: {f}')
     
     def parser(self, i :str, code, raw :str=None, index :int=0):
+        """
+        Функция парсинга и разбора 1 строки (уже разделенной через ; или другой сепаратор).
+        Доделана не до конца.
+        """
         if i.strip() != '': 
             try:
                 command = i.split('=', 1)[0] # Parse command
@@ -151,6 +216,17 @@ class VoxelParser:
         return command, args
     
     def parse(self, code :str, sep :str=';'):
+        """
+        Интерпритатор языка. 
+        
+        Разбивает все по 'sep' и удаляет лишнее. 
+       
+        Идет по разбитым коммандам и -
+            - Разбивает на команду и аргументы функцией parser
+            - Пытается найти соответствие с интерпритируемыми коммандами (начинаются с двоеточия)
+            - Если они не обнаружены пытается вызвать команду из массива интерпритатора с добавленными командами
+            - Парраллельно обрабатывает все ошибки
+        """
         rawcode = code.split(sep)
         code = code.replace(' ', '').split(sep) # Delete space and newlines from code
         newcode = []
@@ -216,8 +292,17 @@ class VoxelParser:
                         splitted = rawcode[now-1].split('-', 2)
                         body = splitted[2].replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"').replace('/:', '\n').replace('}', '').replace('{', '')
                         name = splitted[1]
+                        tabinpyl= body.replace('\n','').startswith('    ')
+                        if tabinpyl:
+                            bodylocal = body.split('\n')
+                            bodyres = []
+                            for i in bodylocal:
+                                line = i.replace("    ", '', 1)
+                                bodyres.append(f'\n{line}')
+                            body = ''.join(bodyres)
+                        else:pass
                         pythonlines[name] = body
-                        Develop.DevlogFUNCTION(body, pythonlines)
+                        Develop.DevlogFUNCTION(f'BODY OF PYL: {body}', pythonlines)
                     except Exception as e:
                         raise SystemError(f"Error in 'pyl' parser: {e}")
                     worked = True
@@ -256,6 +341,9 @@ class VoxelParser:
                         raise SystemError(f"Error in 'sys.out' parser: {e}")
                     worked = True
                 
+                elif command.startswith(':return'):  # Parse return command (for in python use)
+                    return self.commands['!GET']['f']()
+
                 elif command.startswith(':exit'):  # Parse exit
                     break
 
@@ -272,11 +360,26 @@ class VoxelParser:
 
 
 class VoxelLang:
+    """
+    Class of VOXEL LANG vm.
+    
+    Note for developers: Discription of functions in this class only on russian because
+    a lot of developers of language from russia.
+    """
     def __init__(self, length: int):
+        """
+        Функция инициальзции виртуальной машины языка.
+        
+        Примечание: ня вся документация доделана."""
         self.length = length
         self.reset()
 
     def reset(self):
+        """
+        Полная перезагрузка виртуальной машины. 
+        
+        Пересоздает ленту, сбрасывает позицию, код, переменные и 'использованность' библиотек.
+        """
         self.tape = {}
         # Create tape with -(length/2) to length/2 indexes
         self.gentape(self.length)
@@ -400,28 +503,45 @@ class color:
 
 class Errors:
     def SyntaxERROR(text :str, exiting :bool=True):
-        print(color.red(f"\nSyntax Error - {text}"))
-        if exiting: exit()
+        print(color.red(f"\\nSyntax Error - {text}"))
+        if exiting: raise SystemError()
 
     def SystemERROR(text :str, exiting :bool=True):
-        print(color.red(f"\nSystem Error - {text}"))
-        if exiting: exit()
+        print(color.red(f"\\nSystem Error - {text}"))
+        if exiting: raise SystemError()
 
     def ErrorHANDLER(text :str, exiting :bool=True):
-        print(color.set(f"Handled Error - {text}", color.YELLOW))
-        if exiting: exit()
+        print(color.set(f"\\nHandled Error - {text}", color.YELLOW))
+        if exiting: raise SystemError()
     
     def NotFoundERROR(text :str, exiting :bool=True):
-        print(color.set(f"Not found - {text}", color.YELLOW))
-        if exiting: exit()
+        print(color.set(f"\\nNot found - {text}", color.YELLOW))
+        if exiting: raise SystemError()
     
     def IncludeERROR(text :str, exiting :bool=True):
-        print(color.set(f"Error in include - {text}", color.YELLOW))
-        if exiting: exit()
+        print(color.set(f"\\nError in include - {text}", color.YELLOW))
+        if exiting: raise SystemError()
 
     def FileERROR(text :str, exiting :bool=True):
-        print(color.set(f"File error - {text}", color.YELLOW))
-        if exiting: exit()
+        print(color.set(f"\\nFile error - {text}", color.YELLOW))
+        if exiting: raise SystemError()
+
+    def ParamERROR(text :str, exiting :bool=True):
+        print(color.set(f"\\nParameter error - {text}", color.YELLOW))
+        if exiting: raise SystemError()
+
+    def ParseERROR(text :str, exiting :bool=True, fullexit :bool=False):
+        print(color.set(f"\\nParser error - {text}", color.YELLOW))
+        if exiting: raise SystemError()
+        if fullexit: exit(100)
+    
+    def DevERROR(text :str, exiting :bool=True, fullexit :bool=False):
+        print(color.set(f"\\nDeveloper error - {text}", color.YELLOW))
+        if exiting: raise SystemError()
+        if fullexit: exit(100)
+    
+    def ErrorERROR(text :str, exiting :bool=True):raise SystemError()
+
 
 """, "used":False},
 
@@ -452,6 +572,19 @@ def handle_error(exiting=True):
 
     @handle_error()
     def optimal_type(self, rawdata: str):
+        """
+        Функция для подбора оптимального типа данных. 
+        
+        Принимает rawdata - стринговое значение из переменной или константы
+        которое преобразуется в оптимальный тип данных.
+        
+        Обрабатывает-
+            - Списки по знакам '[', ']'
+            - Значения float по знаку '.'
+            - Значения int
+        
+        Если не один из этих типов данных не подешел, возвращает str.
+        """
         data = rawdata.strip()  # Удаляем лишние пробелы
     
         # Обработка списков/выражений с квадратными скобками
@@ -482,6 +615,10 @@ def handle_error(exiting=True):
 
     @handle_error()
     def calc_variables(self):
+        """
+        Функция для инициализации всех переменных (параметры + константы) в один спискок. 
+        Проверяет правельность написания и вклеивает значение и имя во внутренний словарь класса 'variables'.
+        """
         variables = {}
         self.alreadywas = []
         
@@ -515,6 +652,12 @@ def handle_error(exiting=True):
 
     @handle_error()
     def data(self, arg_str:str =""):
+        """
+        Функция которая вычисляет значение. Является главной функцией системы типов в voxel.
+        
+        Пытается найти введенное имя в переменных и вернуть его, если его там нет пытается обработать специальные символы,
+        иначе подбирает оптимальный тип и вовращает его.
+        """
         self.variables = self.calc_variables()
         result = arg_str
         if arg_str in self.variables:
@@ -526,17 +669,33 @@ def handle_error(exiting=True):
             else:
                 result = data
             return self.optimal_type(str(result))
+        if arg_str == "?":
+            result = self.pos
+        elif arg_str == "!":
+            result = self.tape[self.pos]
+        if arg_str == "//?":
+            result = '?'
+        elif arg_str == "//!":
+            result = '!'
         else:
-            return str(result)
+            return self.optimal_type(result)
 
     
     @handle_error()
     def gentape(self, length :int):
+        """
+        Системная функция для перегенерации ленты длинны length.
+        """
         for i in range(length):
             self.tape[i-(length//2)] = 0
         
     @handle_error()
     def code_append(self, arg_str :str=''):
+        """
+        Функция для комманды pylpaste. 
+        
+        Вставляет код из комманды :pyl-{arg_str}-{...}
+        """
         if arg_str in pythonlines:
             self.code.append(pythonlines[arg_str])
         else:
@@ -544,6 +703,11 @@ def handle_error(exiting=True):
 
     @handle_error()
     def include(self, arg_str :str=''):
+        """
+        Функция для комманды include.
+        
+        Вставляет стандартную библиотеку в код и не дает импортировать ее 2 раза.
+        """
         try: 
             if arg_str in self.libs:
                 using = self.libs[arg_str]['used']
@@ -821,6 +985,12 @@ tape[{pos}] = _current
         print(self.pos, end='')
     
     @handle_error()
+    def seteval(self, arg_str: str = ""):
+        args = arg_str.replace('//?', '?').replace('//!', '!')
+        self.tape[self.pos] = eval(args.replace('!', str(self.tape[self.pos])).replace('?', str(self.pos)))
+        self.code.append(f"tape[pos] = eval({arg_str}.replace('!', str(tape[pos])).replace('?', str(pos)))")
+
+    @handle_error()
     def ndata(self, arg_str: str = ""):
         self.code.append(f"print(tape[pos], end='')")
         print(self.tape[self.pos], end='')
@@ -886,6 +1056,10 @@ except:print("EXCEPT")""")
 except:print("EXCEPT")""")
     
     @handle_error()
+    def get(self, arg_str :str=''):
+        return self.tape[self.pos]
+
+    @handle_error()
     def delay(self, arg_str :str=''):
         try:
             delay = int(arg_str) * 0.001
@@ -940,6 +1114,9 @@ except:print("EXCEPT")""")
     
 
 def init(dlocal_lang :VoxelLang, d2local_parser :VoxelParser):
+    """
+    Функция для добавления всех комманд в парсер.
+    """
     # Регистрируем команды
     def drelog(arg_str :str=""):
         global logs
@@ -1040,6 +1217,7 @@ def init(dlocal_lang :VoxelLang, d2local_parser :VoxelParser):
     d2local_parser.add_command('jf', djf, langargs=True, bracketsavailable=True)
     d2local_parser.add_command('for', dfori, langargs=True, bracketsavailable=True)
     d2local_parser.add_command('swp', dlocal_lang.swap, langargs=True, bracketsavailable=True)
+    d2local_parser.add_command('ste', dlocal_lang.seteval, langargs=True, bracketsavailable=True) # WITHOUT ASR.LITERAL_EVAL
     # Aliases & symbols
     d2local_parser.add_command('', dlocal_lang.comentary, langargs=True)
     d2local_parser.add_command('@', dlocal_lang.delay, langargs=True, bracketsavailable=True)
@@ -1069,6 +1247,7 @@ def init(dlocal_lang :VoxelLang, d2local_parser :VoxelParser):
     d2local_parser.add_command('@treset', dlocal_lang.tapereset, args='') # ALPHA VERSION
     # Developer commands
     d2local_parser.add_command('!dev', Develop.DevfunctionPARSE, langargs=True, bracketsavailable=True) # ALPHA VERSION
+    d2local_parser.add_command('!GET', dlocal_lang.get, langargs=True, bracketsavailable=True)
     return dlocal_lang, d2local_parser
 
     
@@ -1079,6 +1258,9 @@ local_lang, local_parser = init(local_lang, local_parser)
 
 @handle_error()
 def builder(text: str, path: str = 'build.py'):
+    """
+    Функция-билдер кода.
+    """
     dlocal_lang = VoxelLang(100001)
     dlocal_parser = VoxelParser()
     
@@ -1090,7 +1272,7 @@ def builder(text: str, path: str = 'build.py'):
 
 
 if __name__=="__main__":
-    local_parser.parse(
+    res = local_parser.parse(
 """
 //= Start;
 :log.new(STARTING...);
@@ -1165,13 +1347,18 @@ jz=if_zero;
 jnz=if_not_zero; 
 @start;
 :pyl-new-{
-e = 2+1
-print(e)
+    e = 2+1
+    print(e)
 }; pylpaste = new;
 bash(echo //s zxy);
 delay=1000;
 !0; out.str(TEST TEXT);
+@include=stdio;
+ste(10 + 763);
++=953;
+:return
 """)
+    print(res) # 953
     local_parser.printallcommands()
     """
 Command 1: NONE
@@ -1213,29 +1400,31 @@ Command 36: jnf
 Command 37: jf
 Command 38: for
 Command 39: swp
-Command 40: 
-Command 41: @
-Command 42: //
-Command 43: ?
-Command 44: !
-Command 45: >/
-Command 46: *
-Command 47: /
-Command 48: <>
-Command 49: !0
-Command 50: +
-Command 51: -
-Command 52: >
-Command 53: <
-Command 54: @include
-Command 55: @import
-Command 56: @retape
-Command 57: @updata
-Command 58: @relog
-Command 59: @start
-Command 60: @tload
-Command 61: @tsave
-Command 62: @tinclude
-Command 63: @treset
-Command 64: !dev, func: <function Develop.DevfunctionPARSE at 0x110e79a20>
+Command 40: ste
+Command 41: 
+Command 42: @
+Command 43: //
+Command 44: ?
+Command 45: !
+Command 46: >/
+Command 47: *
+Command 48: /
+Command 49: <>
+Command 50: !0
+Command 51: +
+Command 52: -
+Command 53: >
+Command 54: <
+Command 55: @include
+Command 56: @import
+Command 57: @retape
+Command 58: @updata
+Command 59: @relog
+Command 60: @start
+Command 61: @tload
+Command 62: @tsave
+Command 63: @tinclude
+Command 64: @treset
+Command 65: !dev
+Command 66: !GET
 """
