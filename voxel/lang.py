@@ -10,9 +10,9 @@ Functions-
 """
 
 from voxel.interface import *
-from voxel.null import Void as VOIDTYPE
+from voxel.types import Void as VOIDTYPE
 
-ver_str = "v0.7.8 1st-beta prod"
+ver_str = "v0.7.8 1st-beta pre8"
 devmode = False
 
 
@@ -125,12 +125,16 @@ logcount = 0
 
 
 class NONE:
+    """
+    Absolute null in voxel language
+    """
     def __init__(self, *args, **kwds):
         pass
     def __call__(self, *args, **kwds):
         pass 
     def VOID(self, *args, **kwds):
         return VOIDTYPE
+    @property
     def n(self, *args, **kwds):
         return VOIDTYPE
 
@@ -702,6 +706,7 @@ def handle_error(exiting=True):
         """
         Системная функция для форматирования вывода
         """
+        string = string.replace('NONE', str(NONE().n)).replace('//nn', 'NONE') # система
         string = string.replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"').replace("//:", ';') # форматируем
         return self.optimal_type(string.replace('\"', '')) # удаляем лишнее 
 
@@ -1614,8 +1619,4 @@ Command 64: @treset, func: <bound method handle_error.<locals>.decorator.<locals
 Command 65: !dev, func: <function Develop.DevfunctionPARSE at 0x10dc9de10>
 Command 66: !GET, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
 1726
-<<<<<<< Updated upstream
 """
-=======
-"""
->>>>>>> Stashed changes
