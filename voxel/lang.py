@@ -374,6 +374,13 @@ class VoxelLang:
         self.length = length
         self.reset()
 
+
+
+
+    """
+    Системные функции
+    """
+
     def reset(self):
         """
         Полная перезагрузка виртуальной машины. 
@@ -679,6 +686,14 @@ def handle_error(exiting=True):
             result = '!'
         else:
             return self.optimal_type(result)
+    
+    @handle_error()
+    def format(self, string :str):
+        """
+        Системная функция для форматирования вывода
+        """
+        string = string.replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"').replace("//:", ';') # форматируем
+        return self.optimal_type(string.replace('\"', '')) # удаляем лишнее 
 
     
     @handle_error()
@@ -688,6 +703,14 @@ def handle_error(exiting=True):
         """
         for i in range(length):
             self.tape[i-(length//2)] = 0
+
+
+
+
+
+    """
+    Функции для комманд
+    """
         
     @handle_error()
     def code_append(self, arg_str :str=''):
@@ -723,6 +746,9 @@ def handle_error(exiting=True):
 
     @handle_error()
     def import_func(self, arg_str :str=''):
+        """
+        Функция для импорта файла из _dependencies_.
+        """
         inp = arg_str.split(',')
         try: 
             self.code.append(f'import _dependencies_.{inp[0]} as {inp[1]}')
@@ -731,12 +757,20 @@ def handle_error(exiting=True):
     
     @handle_error()
     def retape(self, arg_str :str=''):
+        """
+        Функция регенерации файла заданной длинны.
+        """
         n = self.data(arg_str)
         self.gentape(int(n))
         self.code.append(f"tape = {self.tape}")
 
     @handle_error()
     def next(self, arg_str: str = ""):
+        """
+        Функция для движения по ленте вперед. 
+        Принимает args_str - аргументы из парсера языка: используется как индекс,
+        насколько надо сдвинуться вперед по ленте.
+        """
         if arg_str == "": n = 1 
         else:
             n = int(self.data(arg_str))
@@ -745,6 +779,11 @@ def handle_error(exiting=True):
     
     @handle_error()
     def prev(self, arg_str: str = ""):
+        """
+        Функция для движения по назад. 
+        Принимает args_str - аргументы из парсера языка: используется как индекс,
+        насколько надо сдвинуться назад по ленте.
+        """
         if arg_str == "": n = 1 
         else:
             n = int(self.data(arg_str))
@@ -753,6 +792,11 @@ def handle_error(exiting=True):
     
     @handle_error()
     def plus(self, arg_str: str = ""):
+        """
+        Функция для управления данными ленты. 
+        Принимает args_str - аргументы из парсера языка: используется как значение,
+        которое нужно прибавить к текущему.
+        """
         if arg_str == "": n = 1 
         else:
             n = int(self.data(arg_str))
@@ -761,6 +805,11 @@ def handle_error(exiting=True):
     
     @handle_error()
     def minus(self, arg_str: str = ""):
+        """
+        Функция для управления данными ленты. 
+        Принимает args_str - аргументы из парсера языка: используется как значение,
+        которое нужно отнять от текущего.
+        """
         if arg_str == "": n = 1 
         else:
             n = int(self.data(arg_str))
@@ -770,6 +819,11 @@ def handle_error(exiting=True):
     
     @handle_error()
     def set(self, arg_str: str):
+        """
+        Функция для управления данными ленты. 
+        Принимает args_str - аргументы из парсера языка: используется как значение,
+        которое нужно установить в текущюю ячейку.
+        """
         start = arg_str.startswith("\"")
         args = arg_str.replace('\"', '').replace('//s', ' ').replace('//tab', '    ').replace('//n', '\n').replace('//-', '=') if start else self.data(arg_str)
         self.tape[self.pos] = args
@@ -777,40 +831,64 @@ def handle_error(exiting=True):
     
     @handle_error()
     def erase(self, arg_str: str = ""):
+        """
+        Функция для управления данными ленты. 
+        Устанавливает значение текущей ячейки на 0.
+        """
         self.tape[self.pos] = 0
         self.code.append(f"tape[pos] = 0")
     
     @handle_error()
     def getnow(self):
-        self.code.append(f"print(tape[pos])")
+        """
+        Функция для работы с лентой.
+        Выводит текущее значение ячейки.
+        """
+        self.code.append(f"print(tape[pos], end='')")
         return self.tape[self.pos]
     
     @handle_error()
     def output_char(self, arg_str: str = ""):
+        """
+        Функция для работы с лентой.
+        Выводит текущее символьное значения числа в текущей ячейке.
+        """
         t = chr(int(self.tape[self.pos]))
         print(t, end='')
         self.code.append(f"print(chr(int(tape[pos])), end='')")
     
     @handle_error()
     def output_now(self, arg_str: str = ""):
+        """
+        Функция для работы с лентой.
+        Выводит текущее значение ячейки.
+        """
         t = self.tape[self.pos]
         print(t, end='')
         self.code.append(f"print(tape[pos], end='')")
 
     @handle_error()
     def output_next(self, arg_str: str = ""):
+        """
+        Функция для работы с выводом.
+        Выводит '\n' для переноса строки.
+        """
         print()
         self.code.append(f"print()")
 
     @handle_error()
     def print(self, arg_str: str = ""):
+        """
+        Функция для работы с выводом.
+        Выводит отфарматированный текст из аргумента arg_str.
+        """
         start = arg_str.startswith("\"")
         form = arg_str.startswith("//form")
         if start:
-            args = arg_str.replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace('\"', '').replace("//'", '"')
+            args = self.format(self.data(arg_str))
         elif form:
             data = str(self.data(arg_str.replace("//form", '')))
-            args = data.replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace('\"', '').replace("//'", '"')
+            args = self.format(data)
         else:
             args = self.data(arg_str)
         self.code.append(f"print('{args}', end='')")
@@ -818,26 +896,43 @@ def handle_error(exiting=True):
     
     @handle_error()
     def copy(self, arg_str: str = ""):
+        """
+        Функция для работы с лентой.
+        Копирует текущее значение ячейки в 'arg_str' ячейку.
+        """
         if arg_str == "": n = 1 
         else:
-            n = int(self.data(arg_str))
+            n = self.data(arg_str)
         self.tape[n] = self.tape[self.pos]
         self.code.append(f"tape[{n}] = tape[pos]")
     
     @handle_error()
     def python_line(self, arg_str: str = ""):
+        """
+        Строчная функуия комманды inline pyhton.
+        Вставляет в код билда отформатированную строку кода на python.
+        """
         if arg_str == "": s = ''
         else:
             s = str(self.data(arg_str))
-        arg_str = s.replace('//n', '\n').replace('//tab', '    ').replace('//s', ' ').replace('//-', '=')
+        arg_str = self.format(s)
         self.code.append(f"{arg_str}")
     
     @handle_error()
     def input_char(self, arg_str: str = ""):
+        """
+        Функция для работы с вводом.
+        Позволяет ввести один символ. args_str: промпт.
+        """
         char = ord(input(arg_str)[0])
         self.tape[self.pos] = char
         self.code.append(f"tape[pos] = ord(input({arg_str})[0])")
     
+
+
+    """
+    Функции для работы с параметрами. Тут все очевидно.
+    """
     @handle_error()
     def set_param(self, arg_str: str=""):
         inp = arg_str.split(',')
@@ -917,20 +1012,35 @@ def handle_error(exiting=True):
     
     @handle_error()
     def input_num(self, arg_str: str = ""):
+        """
+        Функция для работы с вводом.
+        Позволяет ввести одно число. args_str: промпт.
+        """
         self.tape[self.pos] = int(input(arg_str))
         self.code.append(f"tape[pos] = int(input({arg_str}))")
     
     @handle_error()
     def input_str(self, arg_str: str = ""):
+        """
+        Функция для работы с вводом.
+        Позволяет ввести строку. args_str: промпт.
+        """
         self.tape[self.pos] = str(input(arg_str))
         self.code.append(f"tape[pos] = str(input({arg_str}))")
 
     @handle_error()
     def comentary(self, arg_str: str = ""):
+        """
+        Функция для обработки коментариев.
+        """
         self.code.append(f"# {arg_str}")
 
     @handle_error()
     def multyply(self, arg_str: str = ""):
+        """
+        Функция для управления лентой. 
+        Умножает текущую ячейку на arg_str и записывает ее. 
+        """
         if arg_str == "": n = 1 
         else:
             n = int(self.data(arg_str))
@@ -939,8 +1049,12 @@ def handle_error(exiting=True):
     
     @handle_error()
     def bash(self, arg_str: str = ""):
+        """
+        Функция для запуска команды из терминала. 
+        Принимает строку args_srr и форматирует ее, потом выполняет.
+        """
         try:
-            command = arg_str.replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace('\"', '').replace("//'", '"')
+            command = self.format(arg_str)
             os.system(command)
             self.code.append(f'os.system({command})')
         except Exception as e:
@@ -948,6 +1062,10 @@ def handle_error(exiting=True):
 
     @handle_error()
     def divission(self, arg_str: str = ""):
+        """
+        Функция для управления лентой. 
+        Делит текущую ячейку на arg_str и записывает ее. 
+        """
         if arg_str == "": n = 1 
         else:
             n = int(self.data(arg_str))
@@ -956,17 +1074,24 @@ def handle_error(exiting=True):
     
     @handle_error()
     def tp(self, arg_str: str = ""):
+        """
+        Функция для работы с лентой.
+        Телепортирует на ячейку arg_str.
+        """
         if arg_str == "": n = 1 
         else:
-            n = int(self.data(arg_str))
+            n = self.format(self.data(arg_str))
         self.pos = n
         self.code.append(f"pos = {n}")
         
     @handle_error()
     def swap(self, arg_str: str=""):
+        """
+        Функция для управления лентой. 
+        Перемедает """
         if arg_str == "": pos = 1 
         else:
-            pos = int(self.data(arg_str))
+            pos = self.format(self.data(arg_str))
         current = self.tape[self.pos]
         new = self.tape[pos]
         self.tape[self.pos] = new
@@ -980,30 +1105,54 @@ tape[{pos}] = _current
 
 
     @handle_error()
-    def where(self, arg_str: str = ""):
+    def where(self, arg_str: str = ""): 
+        """
+        Выводит текущую позицию.
+        """
         self.code.append(f"print(pos, end='')")
         print(self.pos, end='')
     
     @handle_error()
     def seteval(self, arg_str: str = ""):
+        """
+        Функция для управления лентой. 
+        Вычисляет значение и устанавливает его в текущую ячейку.
+        """
         args = arg_str.replace('//?', '?').replace('//!', '!')
         self.tape[self.pos] = eval(args.replace('!', str(self.tape[self.pos])).replace('?', str(self.pos)))
         self.code.append(f"tape[pos] = eval({arg_str}.replace('!', str(tape[pos])).replace('?', str(pos)))")
 
     @handle_error()
     def ndata(self, arg_str: str = ""):
+        """
+        Функция для работы с выводом. 
+        Воводит текущее значение ленты.
+        """
         self.code.append(f"print(tape[pos], end='')")
         print(self.tape[self.pos], end='')
     
     @handle_error()
     def getcode(self):
+        """
+        Системная функция.
+        Позволяет получить весь код для билда.
+        """
         return self.code
     
     @handle_error()
     def printcode(self):
+        """
+        Системная функция для отладки. 
+        Выводит весь код из билда.
+        """
         print("\n".join(self.code))
 
     
+
+
+    """
+    Функции для работы с лентой (с tapefile).
+    """
     @handle_error()
     def tapeload(self, arg_str :str=''):
         try:
@@ -1057,10 +1206,17 @@ except:print("EXCEPT")""")
     
     @handle_error()
     def get(self, arg_str :str=''):
+        """
+        Внутренняя системная функция для получения значения текущей ячейки.
+        """
         return self.tape[self.pos]
 
     @handle_error()
     def delay(self, arg_str :str=''):
+        """
+        Функция для работы с задержкой. 
+        Позволяет сделать задержку на тысячные сукунды (1000 в вводе = 1 в выводе).
+        """
         try:
             delay = int(arg_str) * 0.001
             self.code.append(f'time.sleep({delay})')
@@ -1069,6 +1225,9 @@ except:print("EXCEPT")""")
     
     @handle_error()
     def build(self, path: str = 'cache.py'):
+        """
+        Функция создания и сохранения билда.
+        """
         import os
         
         # Create system dit
