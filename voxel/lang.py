@@ -1515,75 +1515,93 @@ delay=1000;
 @include=stdio;
 ste(10 + 763);
 +=953;
+out.str((HELLOWORLD));
 :return
 """)
-    print(res) # 953
     local_parser.printallcommands()
+    print(res) # 1726
     """
-Command 1: NONE
-Command 2: nxt
-Command 3: prv
-Command 4: pls
-Command 5: mns
-Command 6: set
-Command 7: ers
-Command 8: out.char
-Command 9: out.now
-Command 10: out.str
-Command 11: out.next
-Command 12: out.ptype
-Command 13: in.char
-Command 14: in.num
-Command 15: in.str
-Command 16: mov
-Command 17: pyl
-Command 18: jmp
-Command 19: mlt
-Command 20: dvs
-Command 21: ppl
-Command 22: pmn
-Command 23: pst
-Command 24: pdv
-Command 25: pmp
-Command 26: ptp
-Command 27: bash
-Command 28: delay
-Command 29: pylpaste
-Command 30: plps
-Command 31: use
-Command 32: jnz
-Command 33: jz
-Command 34: jno
-Command 35: jo
-Command 36: jnf
-Command 37: jf
-Command 38: for
-Command 39: swp
-Command 40: ste
-Command 41: 
-Command 42: @
-Command 43: //
-Command 44: ?
-Command 45: !
-Command 46: >/
-Command 47: *
-Command 48: /
-Command 49: <>
-Command 50: !0
-Command 51: +
-Command 52: -
-Command 53: >
-Command 54: <
-Command 55: @include
-Command 56: @import
-Command 57: @retape
-Command 58: @updata
-Command 59: @relog
-Command 60: @start
-Command 61: @tload
-Command 62: @tsave
-Command 63: @tinclude
-Command 64: @treset
-Command 65: !dev
-Command 66: !GET
+10
+AAAAAAAAAA
+int
+float
+00
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+intfloatstr
+test string
+test102
+[1, 2, 'value']list
+text valueint19Some text
+=== log 0: STARTING... ===
+=== log 1: ENDING... ===
+DEVMODE: True
+zxy
+Zero!Notzero!TESTTEXT(HELLOWORLD)
+Command 1: NONE, func: <function none at 0x101dabb50>
+Command 2: nxt, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 3: prv, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 4: pls, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 5: mns, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 6: set, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 7: ers, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 8: out.char, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 9: out.now, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 10: out.str, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 11: out.next, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 12: out.ptype, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 13: in.char, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 14: in.num, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 15: in.str, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 16: mov, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 17: pyl, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 18: jmp, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 19: mlt, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 20: dvs, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 21: ppl, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 22: pmn, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 23: pst, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 24: pdv, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 25: pmp, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 26: ptp, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 27: bash, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 28: delay, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 29: pylpaste, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 30: plps, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 31: use, func: <function init.<locals>.duse at 0x10ffd5cf0>
+Command 32: jnz, func: <function handle_error.<locals>.decorator.<locals>.wrapper at 0x10ffd64d0>
+Command 33: jz, func: <function handle_error.<locals>.decorator.<locals>.wrapper at 0x10ffd63b0>
+Command 34: jno, func: <function handle_error.<locals>.decorator.<locals>.wrapper at 0x10ffd5fc0>
+Command 35: jo, func: <function handle_error.<locals>.decorator.<locals>.wrapper at 0x10ffd5ea0>
+Command 36: jnf, func: <function handle_error.<locals>.decorator.<locals>.wrapper at 0x10ffd6200>
+Command 37: jf, func: <function handle_error.<locals>.decorator.<locals>.wrapper at 0x10ffd60e0>
+Command 38: for, func: <function init.<locals>.dfori at 0x10ffd5d80>
+Command 39: swp, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 40: ste, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 41: , func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 42: @, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 43: //, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 44: ?, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 45: !, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 46: >/, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 47: *, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 48: /, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 49: <>, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 50: !0, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 51: +, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 52: -, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 53: >, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 54: <, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 55: @include, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 56: @import, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 57: @retape, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 58: @updata, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 59: @relog, func: <function init.<locals>.drelog at 0x10dc9e320>
+Command 60: @start, func: <function init.<locals>.dstart at 0x10ffd5c60>
+Command 61: @tload, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 62: @tsave, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 63: @tinclude, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 64: @treset, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+Command 65: !dev, func: <function Develop.DevfunctionPARSE at 0x10dc9de10>
+Command 66: !GET, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
+1726
 """
