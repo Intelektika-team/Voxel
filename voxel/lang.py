@@ -12,7 +12,7 @@ Functions-
 from voxel.interface import *
 from voxel.types import Void as VOIDTYPE
 
-ver_str = "v0.7.8 1st-beta pre8"
+ver_str = "v0.7.8 1st-beta pre8vu"
 devmode = False
 
 
@@ -704,7 +704,7 @@ def handle_error(exiting=True):
     @handle_error()
     def format(self, string :str):
         """
-        Системная функция для форматирования вывода
+        Системная функция для форматирования вывода.
         """
         string = string.replace('NONE', str(NONE().n)).replace('//nn', 'NONE') # система
         string = string.replace('//s', ' ').replace('//n', '\n').replace('//tab', '    ').replace('//-', '=').replace("//'", '"').replace("//:", ';') # форматируем
@@ -1435,13 +1435,17 @@ def builder(text: str, path: str = 'build.py'):
     """
     Функция-билдер кода.
     """
-    dlocal_lang = VoxelLang(100001)
-    dlocal_parser = VoxelParser()
-    
-    dlocal_lang, dlocal_parser = init(dlocal_lang, dlocal_parser)
+    try:
+        dlocal_lang = VoxelLang(100001)
+        dlocal_parser = VoxelParser()
+        
+        dlocal_lang, dlocal_parser = init(dlocal_lang, dlocal_parser)
 
-    dlocal_parser.parse(text)
-    dlocal_lang.build(path)
+        dlocal_parser.parse(text)
+        dlocal_lang.build(path)
+    except Exception as e:
+        Develop.DevlogFUNCTION(f'builder error: {e}\ncode: raw- {text}, path- {path}')
+        print(f'BUILDER ERROR: {e}')
 
 
 
