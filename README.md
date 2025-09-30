@@ -3,7 +3,7 @@
 
 [![Vxl](https://img.shields.io/badge/Vxl-tool-brightgreen?style=for-the-badge)](https://github.com/Intelektika-team/vxl)
 [![Voxel Lang](https://img.shields.io/badge/Voxel-Lang-orange?style=for-the-badge)](https://github.com/Intelektika-team/Voxel)
-[![Version](https://img.shields.io/badge/Version-0.7.2-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-0.7.8-blue?style=for-the-badge)](#)
 [![Join](https://img.shields.io/badge/Join-us-red?style=for-the-badge)](https://intelektika-team.github.io/)
 [![Team](https://img.shields.io/badge/Our-team-yellow?style=for-the-badge)](https://github.com/Intelektika-team)
 
