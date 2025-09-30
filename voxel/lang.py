@@ -6,9 +6,11 @@ Functions-
     Develop - The developer functions
     VoxelParser - The interpriter of voxel language
     VoxelLanguage - The voxel language VM
+    NONE - The absolute null function of voxel
 """
 
 from voxel.interface import *
+from voxel.null import Void as VOIDTYPE
 
 ver_str = "v0.7.8 1st-beta prod"
 devmode = False
@@ -122,8 +124,16 @@ logs = []
 logcount = 0
 
 
-def none(*args, **kwargs):
-    pass
+class NONE:
+    def __init__(self, *args, **kwds):
+        pass
+    def __call__(self, *args, **kwds):
+        pass 
+    def VOID(self, *args, **kwds):
+        return VOIDTYPE
+    def n(self, *args, **kwds):
+        return VOIDTYPE
+
 
 
 class VoxelParser:
@@ -137,7 +147,7 @@ class VoxelParser:
         """
         Функция для инициализации интерпритатора.
         """
-        self.commands={'NONE':{'f':none, 'a':'', 'la':True, 'br':True}}
+        self.commands={'NONE':{'f':NONE(), 'a':'', 'la':True, 'br':True}}
     
     def add_command(self, command :str, function :object, args :list=None, langargs :bool=False, bracketsavailable :bool=False):
         """
@@ -1604,4 +1614,8 @@ Command 64: @treset, func: <bound method handle_error.<locals>.decorator.<locals
 Command 65: !dev, func: <function Develop.DevfunctionPARSE at 0x10dc9de10>
 Command 66: !GET, func: <bound method handle_error.<locals>.decorator.<locals>.wrapper of <__main__.VoxelLang object at 0x10ffd8640>>
 1726
+<<<<<<< Updated upstream
 """
+=======
+"""
+>>>>>>> Stashed changes
